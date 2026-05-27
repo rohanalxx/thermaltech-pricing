@@ -1728,19 +1728,21 @@ body{
           <div class="setting-label">Project URL</div>
           <div class="setting-desc">https://xxx.supabase.co</div>
         </div>
-        <input class="setting-input" id="s-sb-url" type="url" placeholder="https://…"
+        <input class="setting-input" id="s-sb-url" type="text" placeholder="https://…"
                style="width:180px;text-align:left;font-size:10px"
-               onchange="saveAppSettings()" aria-label="Supabase URL" />
+               aria-label="Supabase URL" />
       </div>
       <div class="setting-row">
         <div>
           <div class="setting-label">Anon Key</div>
-          <div class="setting-desc">Public API key</div>
+          <div class="setting-desc">Public API key (eyJ…)</div>
         </div>
-        <input class="setting-input" id="s-sb-key" type="password" placeholder="eyJ…"
+        <input class="setting-input" id="s-sb-key" type="text" placeholder="eyJ…"
                style="width:180px;text-align:left;font-size:10px"
-               onchange="saveAppSettings()" aria-label="Supabase anon key" />
+               aria-label="Supabase anon key" />
       </div>
+      <button class="btn btn-primary btn-full" style="margin-top:4px" onclick="saveSupabaseSettings()">💾 Save Supabase Credentials</button>
+      <div id="sb-status" style="font-size:11px;text-align:center;margin-top:6px;color:var(--muted)"></div>
 
       <div class="mdivider"></div>
 
@@ -2514,6 +2516,37 @@ function loadAppSettings(){
   // init supabase with saved creds
   initSupabase();
 }
+function saveSupabaseSettings(){
+  const url=(document.getElementById('s-sb-url')?.value||'').trim().replace(/\/rest\/v1\/?$/,'').replace(/\/$/,'');
+  const key=(document.getElementById('s-sb-key')?.value||'').trim();
+  if(!url||!key){toast('Enter both URL and key','error');return;}
+  appSettings.sbUrl=url;
+  appSettings.sbKey=key;
+  localStorage.setItem('hvac_app_settings',JSON.stringify(appSettings));
+  // update field with cleaned URL
+  const urlField=document.getElementById('s-sb-url');
+  if(urlField) urlField.value=url;
+  initSupabase();
+  // test connection
+  const status=document.getElementById('sb-status');
+  if(status) status.textContent='Testing connection…';
+  if(sbClient){
+    sbClient.from('labour_defaults').select('category').limit(1)
+      .then(({error})=>{
+        if(error){
+          if(status) status.textContent='❌ '+error.message;
+          toast('Supabase error: '+error.message,'error');
+        } else {
+          if(status) status.textContent='✅ Connected';
+          toast('Supabase connected','success');
+        }
+      });
+  } else {
+    if(status) status.textContent='❌ Client failed to init';
+    toast('Supabase init failed — check URL','error');
+  }
+}
+
 function saveAppSettings(){
   const lr=parseFloat(document.getElementById('s-labour-rate').value)||129;
   const rf=parseFloat(document.getElementById('s-return-fee').value)||79;
@@ -2521,8 +2554,8 @@ function saveAppSettings(){
     labourRate:lr,
     returnFee:rf,
     adminPin:(document.getElementById('s-admin-pin')?.value||'1234'),
-    sbUrl:(document.getElementById('s-sb-url')?.value||'').trim(),
-    sbKey:(document.getElementById('s-sb-key')?.value||'').trim(),
+    sbUrl:appSettings.sbUrl||'',
+    sbKey:appSettings.sbKey||'',
     ollamaUrl:(document.getElementById('s-ollama-url')?.value||'http://localhost:11434').trim(),
     claudeKey:(document.getElementById('s-claude-key')?.value||'').trim(),
   };
