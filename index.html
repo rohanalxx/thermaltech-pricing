@@ -1532,6 +1532,10 @@ body{
           Import xlsx
         </button>
         <input type="file" id="units-xlsx-upload" accept=".xlsx,.xls" style="display:none" onchange="importUnitsXlsx(this)" />
+        <button class="btn btn-ghost btn-sm" onclick="downloadXlsxTemplate()" title="Download blank template for bulk import">
+          <svg class="icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Template
+        </button>
       </div>
       <div class="admin-table-wrap">
         <table class="admin-table" aria-label="Units database">
@@ -3554,6 +3558,105 @@ function importUnitsXlsx(input){
     input.value='';
   };
   reader.readAsBinaryString(file);
+}
+
+// ── DOWNLOAD XLSX TEMPLATE ──────────────────────
+function downloadXlsxTemplate(){
+  const wb = XLSX.utils.book_new();
+
+  /* ── Sheet 1: Data ── */
+  const HEADERS = [
+    'Model Number','Brand','Unit Type','Tonnage','Notes',
+    'Part Number','Description','Category','Cost','Sell Price',
+    'Superseded By','Supersedes'
+  ];
+
+  const CATEGORIES = [
+    'Compressor','Motor / Fan Motor','Capacitor','Control Board','Valve',
+    'Sensor / Thermostat','Heat Exchanger','Coil','Pump','Igniter / Burner',
+    'Filter Dryer','Contactor','Relay','Transformer','Blower','Damper','Other'
+  ];
+
+  // Sample rows — one unit can have multiple rows (one part per row)
+  const SAMPLE = [
+    // Unit 1 — 3 parts
+    ['AC-036-230V','Carrier','AC','3 Ton','Split system, R-410A',
+      'P031-02685-000','Run Capacitor 35/5 MFD','Capacitor', 18.50, 55.00, '', ''],
+    ['AC-036-230V','Carrier','AC','3 Ton','',
+      'HC44AE460','Condenser Fan Motor 1/6 HP','Motor / Fan Motor', 95.00, 214.00, '', ''],
+    ['AC-036-230V','Carrier','AC','3 Ton','',
+      'HH57AC077','Contactor 2-Pole 40A','Contactor', 22.00, 66.00, '', ''],
+
+    // Unit 2 — 2 parts
+    ['GM80-080-4','Lennox','Gas Furnace','80K BTU','80% AFUE, 4-speed',
+      '100672-05','Inducer Motor Assembly','Motor / Fan Motor', 245.00, 552.00, '100672-07', ''],
+    ['GM80-080-4','Lennox','Gas Furnace','80K BTU','',
+      '10W06','Hot Surface Igniter','Igniter / Burner', 32.00, 80.00, '', ''],
+
+    // Unit 3 — unit row only (no parts yet — Description blank)
+    ['WHP036-1','Trane','Heat Pump','3 Ton','Water-source, R-410A',
+      '', '', '', '', '', '', ''],
+
+    // Blank template rows for user to fill in
+    ['','','','','','','','','','','',''],
+    ['','','','','','','','','','','',''],
+    ['','','','','','','','','','','',''],
+    ['','','','','','','','','','','',''],
+    ['','','','','','','','','','','',''],
+  ];
+
+  const wsData = [HEADERS, ...SAMPLE];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Column widths
+  ws['!cols'] = [
+    {wch:18},{wch:14},{wch:14},{wch:10},{wch:28},
+    {wch:18},{wch:34},{wch:20},{wch:10},{wch:10},
+    {wch:16},{wch:16}
+  ];
+
+  // Freeze top row
+  ws['!freeze'] = {xSplit:0, ySplit:1};
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Units & Parts');
+
+  /* ── Sheet 2: Instructions ── */
+  const INFO = [
+    ['ThermalTech Pricing Suite — Bulk Import Template'],
+    [''],
+    ['HOW TO USE'],
+    ['1. Fill in the "Units & Parts" sheet. Delete the sample rows first.'],
+    ['2. Each ROW = one PART for a unit.'],
+    ['3. If a unit has 5 parts → 5 rows, all with the same Model Number.'],
+    ['4. Columns marked REQUIRED must not be blank.'],
+    ['5. If Description is blank, the row creates/updates the unit only (no part added).'],
+    ['6. Upload the file in Admin → Units → Import xlsx.'],
+    [''],
+    ['COLUMN REFERENCE'],
+    ['Column','Required?','Notes'],
+    ['Model Number','YES','Unique identifier. Uppercase. E.g. AC-036-230V'],
+    ['Brand','No','Manufacturer name. E.g. Carrier, Lennox, Trane'],
+    ['Unit Type','No','AC / Gas Furnace / Heat Pump / Air Handler / Boiler / Other'],
+    ['Tonnage','No','E.g. 2 Ton, 2.5 Ton, 80K BTU'],
+    ['Notes','No','Any extra info about the unit'],
+    ['Part Number','No','OEM part number'],
+    ['Description','Required for parts','E.g. Run Capacitor 35/5 MFD. Leave blank if row is unit-only.'],
+    ['Category','No (defaults to Other)','Must match one of the allowed categories below'],
+    ['Cost','No (defaults to 0)','Your purchase cost in dollars. E.g. 18.50'],
+    ['Sell Price','No (auto-calculated)','Leave blank → auto-calculated via markup tiers. Or enter manually.'],
+    ['Superseded By','No','Newer part number that replaces this one'],
+    ['Supersedes','No','Older part number this one replaces'],
+    [''],
+    ['ALLOWED CATEGORIES'],
+    ...CATEGORIES.map(c=>[c]),
+  ];
+
+  const wsInfo = XLSX.utils.aoa_to_sheet(INFO);
+  wsInfo['!cols'] = [{wch:24},{wch:22},{wch:60}];
+  XLSX.utils.book_append_sheet(wb, wsInfo, 'Instructions');
+
+  XLSX.writeFile(wb, 'ThermalTech_Import_Template.xlsx');
+  toast('Template downloaded','success');
 }
 
 // ═══════════════════════════════════════════════
