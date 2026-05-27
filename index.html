@@ -1,0 +1,3838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ThermalTech · Pricing Suite</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#08091a" id="theme-meta">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+/* ─── TOKENS ─── */
+:root{
+  --bg:#08091a;--surface:#0e0f1f;--card:#121328;--cardhi:#171830;
+  --border:#1e2040;--bordhi:#2e3060;
+  --text:#dde2ff;--muted:#5a6090;--muted2:#2e3260;
+  --accent:#4f7cff;--accenth:#6b94ff;--accentg:rgba(79,124,255,.12);
+  --success:#22d37a;--warn:#f5a623;--danger:#ff4d6d;--gold:#e8b84b;
+  --mono:'DM Mono',monospace;--head:'Syne',sans-serif;
+  --r:14px;--rs:8px;--shadow:0 8px 40px rgba(0,0,0,.7);
+}
+body.light{
+  --bg:#f0f1f8;--surface:#ffffff;--card:#ffffff;--cardhi:#f5f6fd;
+  --border:#dde0f0;--bordhi:#FF6D1F;
+  --text:#111122;--muted:#606080;--muted2:#c0c4d8;
+  --accent:#FF6D1F;--accenth:#e85a0a;--accentg:rgba(255,109,31,.10);
+  --success:#16a34a;--warn:#d97706;--danger:#dc2626;--gold:#b45309;
+  --shadow:0 4px 24px rgba(0,0,0,.08);
+}
+
+/* ─── RESET ─── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:var(--head);background:var(--bg);color:var(--text);min-height:100dvh;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+input,select,textarea{font-family:inherit;outline:none;border:none;background:none}
+ul{list-style:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ─── TOPBAR ─── */
+.topbar{
+  height:56px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:100;gap:12px;
+}
+.logo-mark{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.logo-icon{
+  width:32px;height:32px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,#4f7cff,#7c5fff);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;color:#fff;
+  box-shadow:0 3px 12px rgba(79,124,255,.4);
+}
+body.light .logo-icon{background:linear-gradient(135deg,#FF6D1F,#e85a0a);box-shadow:0 3px 12px rgba(255,109,31,.35)}
+.logo-text{font-size:13px;font-weight:800;letter-spacing:.2px;white-space:nowrap}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:1.4px;text-transform:uppercase;margin-top:1px}
+
+/* ─── MAIN TABS ─── */
+.tabs{
+  display:flex;align-items:center;gap:3px;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:10px;padding:3px;
+}
+.tab{
+  padding:7px 20px;border-radius:7px;
+  font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  color:var(--muted);background:transparent;
+  cursor:pointer;transition:all .18s;white-space:nowrap;
+}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 10px rgba(79,124,255,.35)}
+body.light .tab.active{box-shadow:0 2px 10px rgba(255,109,31,.3)}
+
+/* ─── TOPBAR RIGHT ─── */
+.topbar-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.theme-toggle{
+  display:flex;align-items:center;gap:5px;padding:6px 11px;border-radius:20px;
+  font-size:10px;font-weight:700;letter-spacing:.5px;
+  cursor:pointer;background:var(--card);border:1px solid var(--border);
+  color:var(--muted);transition:all .2s;
+}
+.theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
+.icon-btn{
+  width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  border-radius:var(--rs);background:var(--card);border:1px solid var(--border);
+  color:var(--muted);cursor:pointer;transition:all .15s;font-size:16px;
+}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ─── MAIN LAYOUT ─── */
+.main{max-width:780px;margin:0 auto;padding:44px 20px 100px}
+.tab-view{display:none;animation:fadeIn .2s ease}
+.tab-view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── OPTIONAL FIELDS (Part tab) ─── */
+.opt-fields{display:flex;gap:10px;margin-bottom:40px;flex-wrap:wrap}
+.opt-input{
+  flex:1;min-width:120px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rs);padding:9px 13px;
+  color:var(--text);font-size:12px;
+  transition:border-color .15s;
+}
+.opt-input:focus{border-color:var(--accent)}
+.opt-input::placeholder{color:var(--muted)}
+select.opt-input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a6090'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:28px}
+
+/* ─── HERO COST INPUT ─── */
+.hero-section{text-align:center;margin-bottom:28px}
+.cost-label{
+  font-size:10px;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;margin-bottom:16px;display:block;
+}
+.cost-wrap{
+  display:inline-flex;align-items:baseline;gap:4px;
+  background:var(--surface);border:2px solid var(--border);
+  border-radius:18px;padding:18px 28px;
+  width:100%;max-width:460px;cursor:text;
+  transition:border-color .2s,box-shadow .2s;
+}
+.cost-wrap:focus-within{
+  border-color:var(--accent);
+  box-shadow:0 0 0 4px var(--accentg);
+}
+.cost-currency{
+  font-family:var(--mono);font-size:30px;font-weight:300;
+  color:var(--muted);flex-shrink:0;line-height:1;
+}
+.cost-input{
+  font-family:var(--mono);font-size:46px;font-weight:700;
+  color:var(--text);width:100%;text-align:right;
+  -moz-appearance:textfield;line-height:1;
+}
+.cost-input::-webkit-outer-spin-button,
+.cost-input::-webkit-inner-spin-button{-webkit-appearance:none}
+.cost-input::placeholder{color:var(--muted2)}
+
+/* ─── RESULT CARD ─── */
+.result-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:40px 32px 32px;
+  text-align:center;margin-bottom:28px;
+  transition:border-color .3s,box-shadow .3s;
+  position:relative;overflow:hidden;
+}
+.result-card::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--success) 40%,var(--accent) 60%,transparent);
+  opacity:0;transition:opacity .4s;
+}
+.result-card.has-val{border-color:var(--bordhi)}
+.result-card.has-val::after{opacity:1}
+.sell-label{
+  font-size:9px;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;margin-bottom:12px;
+}
+.sell-price{
+  font-family:var(--mono);font-size:76px;font-weight:700;
+  color:var(--muted2);line-height:1;margin-bottom:20px;
+  letter-spacing:-2px;transition:color .25s;
+}
+.result-card.has-val .sell-price{color:var(--success)}
+.sell-meta{
+  display:flex;align-items:flex-start;justify-content:center;
+  gap:32px;flex-wrap:wrap;
+}
+.meta-item{display:flex;flex-direction:column;align-items:center;gap:4px}
+.meta-val{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--accent)}
+.meta-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.tier-badge{
+  display:inline-block;margin-top:18px;font-size:10px;
+  color:var(--muted);background:var(--surface);
+  border:1px solid var(--border);border-radius:20px;
+  padding:4px 14px;font-family:var(--mono);
+}
+
+/* ─── TIER TABLE ─── */
+.tier-section{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;
+}
+.tier-section-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 16px;border-bottom:1px solid var(--border);
+}
+.tier-section-title{
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;
+}
+.tier-table{width:100%;border-collapse:collapse}
+.tier-table th{
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;
+  padding:8px 16px;text-align:left;
+  background:var(--surface);
+}
+.tier-table td{padding:9px 16px;border-top:1px solid var(--border);font-family:var(--mono);font-size:12px}
+.tier-table tr.t-active td{background:var(--accentg)}
+.tier-table tr.t-active td:first-child{color:var(--accent);font-weight:600;border-left:2px solid var(--accent)}
+.td-r{text-align:right}.td-success{color:var(--success)}.td-gold{color:var(--gold)}.td-accent{color:var(--accent)}
+
+/* ─── SUB TABS (Material) ─── */
+.sub-tabs{
+  display:flex;gap:0;border-bottom:1px solid var(--border);
+  margin-bottom:32px;
+}
+.sub-tab{
+  padding:10px 22px;font-size:12px;font-weight:700;letter-spacing:.3px;
+  color:var(--muted);background:transparent;
+  cursor:pointer;border-bottom:2px solid transparent;
+  margin-bottom:-1px;transition:all .15s;
+}
+.sub-tab:hover{color:var(--text)}
+.sub-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.sub-view{display:none}
+.sub-view.active{display:block;animation:fadeIn .18s ease}
+
+/* ─── DATABASE CONTROLS ─── */
+.db-controls{display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap}
+.search-wrap{position:relative;flex:1;min-width:200px}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
+.search-input{
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rs);padding:9px 12px 9px 36px;
+  color:var(--text);font-size:12px;transition:border-color .15s;
+}
+.search-input:focus{border-color:var(--accent)}
+.search-input::placeholder{color:var(--muted)}
+.cat-filter{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rs);padding:9px 28px 9px 13px;
+  color:var(--text);font-size:12px;cursor:pointer;
+  appearance:none;min-width:160px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a6090'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+  transition:border-color .15s;
+}
+.cat-filter:focus{border-color:var(--accent)}
+
+/* ─── BUTTONS ─── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 16px;border-radius:var(--rs);
+  font-size:11px;font-weight:700;letter-spacing:.3px;
+  cursor:pointer;white-space:nowrap;transition:all .15s;
+}
+.btn-primary{background:var(--accent);color:#fff;border:none}
+.btn-primary:hover{background:var(--accenth);transform:translateY(-1px);box-shadow:0 4px 14px rgba(79,124,255,.35)}
+body.light .btn-primary:hover{box-shadow:0 4px 14px rgba(255,109,31,.35)}
+.btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--bordhi)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--card);color:var(--text)}
+.btn-danger{background:rgba(255,77,109,.08);color:var(--danger);border:1px solid rgba(255,77,109,.2)}
+.btn-danger:hover{background:rgba(255,77,109,.18)}
+.btn-sm{padding:6px 12px;font-size:10px}
+.btn-full{width:100%;justify-content:center}
+
+/* ─── PARTS GRID ─── */
+.parts-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:8px;max-height:440px;overflow-y:auto;padding-right:4px;
+}
+.part-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rs);padding:11px 14px;
+  cursor:pointer;transition:all .15s;
+}
+.part-card:hover{border-color:var(--accent);background:var(--accentg);transform:translateY(-1px)}
+.part-cat{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.part-desc{font-size:11px;font-weight:600;margin-bottom:6px;line-height:1.3;color:var(--text)}
+.part-prices{display:flex;gap:8px;align-items:center}
+.part-cost{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.part-sell{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--success)}
+.parts-count-lbl{font-size:10px;color:var(--muted);margin-top:10px;padding:0 2px}
+
+/* ─── MODAL ─── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.72);z-index:500;
+  align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(6px);
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);width:100%;max-width:380px;
+  box-shadow:var(--shadow);animation:mIn .18s ease;overflow:hidden;
+}
+@keyframes mIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--border);
+}
+.modal-title{font-size:13px;font-weight:700}
+.modal-close{
+  width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+  background:var(--cardhi);border:1px solid var(--border);
+  border-radius:6px;cursor:pointer;color:var(--muted);font-size:14px;
+  transition:all .15s;
+}
+.modal-close:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.modal-body{padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.mdivider{height:1px;background:var(--border);margin:4px 0}
+
+/* ─── TOAST ─── */
+#toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:7px;z-index:9999;pointer-events:none}
+.toast{
+  background:var(--cardhi);border:1px solid var(--border);
+  border-radius:var(--rs);padding:10px 16px;font-size:11px;
+  display:flex;align-items:center;gap:9px;
+  min-width:200px;max-width:300px;
+  box-shadow:var(--shadow);pointer-events:auto;
+  animation:slideUp .18s ease;transition:opacity .3s;
+}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid var(--danger)}
+.toast.info{border-left:3px solid var(--accent)}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── LABOUR CARD ─── */
+.labour-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);margin-bottom:28px;overflow:hidden;
+}
+.labour-head{
+  padding:11px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.labour-body{padding:18px 16px 20px}
+.labour-row{
+  display:flex;gap:20px;align-items:flex-end;
+  flex-wrap:wrap;margin-bottom:20px;
+}
+.labour-field{display:flex;flex-direction:column;gap:7px}
+.field-label{
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;
+}
+.stepper{
+  display:flex;align-items:center;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--rs);overflow:hidden;
+}
+.step-btn{
+  width:36px;height:38px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:300;color:var(--muted);
+  background:transparent;cursor:pointer;transition:all .15s;flex-shrink:0;
+  line-height:1;
+}
+.step-btn:hover{background:var(--accentg);color:var(--accent)}
+.step-val{
+  width:58px;text-align:center;font-family:var(--mono);
+  font-size:15px;font-weight:600;color:var(--text);
+  border-left:1px solid var(--border);border-right:1px solid var(--border);
+  height:38px;-moz-appearance:textfield;
+}
+.step-val::-webkit-outer-spin-button,.step-val::-webkit-inner-spin-button{-webkit-appearance:none}
+.rate-wrap{
+  display:flex;align-items:center;gap:4px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--rs);padding:0 12px;height:38px;
+  transition:border-color .15s;
+}
+.rate-wrap:focus-within{border-color:var(--accent)}
+.rate-prefix{font-family:var(--mono);color:var(--muted);font-size:14px;flex-shrink:0}
+.rate-input{
+  width:60px;font-family:var(--mono);font-size:15px;font-weight:600;
+  color:var(--text);-moz-appearance:textfield;
+}
+.rate-input::-webkit-outer-spin-button,.rate-input::-webkit-inner-spin-button{-webkit-appearance:none}
+.rv-toggle{
+  display:flex;align-items:center;gap:9px;cursor:pointer;
+  height:38px;padding:0 2px;
+}
+.rv-toggle input[type="checkbox"]{
+  width:17px;height:17px;accent-color:var(--accent);
+  cursor:pointer;flex-shrink:0;
+}
+.rv-label{font-family:var(--mono);font-size:13px;color:var(--warn);font-weight:600}
+
+/* Breakdown */
+.breakdown{border-top:1px solid var(--border);padding-top:14px}
+.bk-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 0;
+}
+.bk-label{font-size:11px;color:var(--muted)}
+.bk-val{font-family:var(--mono);font-size:13px;color:var(--text);font-weight:500}
+.bk-divider{height:1px;background:var(--border);margin:6px 0}
+.bk-total-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0 2px;border-top:1px solid var(--border);margin-top:4px;
+}
+.bk-total-label{font-size:12px;font-weight:700;letter-spacing:.3px}
+.bk-total-val{
+  font-family:var(--mono);font-size:26px;font-weight:700;
+  color:var(--gold);letter-spacing:-1px;
+}
+
+/* Settings fields */
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid var(--border);gap:12px;
+}
+.setting-row:last-of-type{border-bottom:none}
+.setting-label{font-size:12px;font-weight:600}
+.setting-desc{font-size:10px;color:var(--muted);margin-top:2px}
+.setting-input{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rs);padding:7px 11px;
+  color:var(--text);font-family:var(--mono);font-size:13px;
+  font-weight:600;width:90px;text-align:right;
+  transition:border-color .15s;
+}
+.setting-input:focus{border-color:var(--accent)}
+
+/* ─── EMPTY STATE ─── */
+.empty-state{
+  text-align:center;padding:48px 20px;color:var(--muted);
+}
+.empty-state-icon{font-size:32px;margin-bottom:10px;opacity:.4}
+.empty-state-text{font-size:12px}
+
+/* ─── MATERIAL EDIT MODAL ─── */
+.modal-footer{
+  padding:12px 20px;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;justify-content:flex-end;
+}
+.mfield{display:flex;flex-direction:column;gap:7px}
+.mat-edit-btn{
+  position:absolute;top:7px;right:7px;
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:5px;font-size:12px;color:var(--muted);
+  cursor:pointer;opacity:0;transition:all .15s;z-index:1;
+  line-height:1;
+}
+.part-card{position:relative}
+.part-card:hover .mat-edit-btn{opacity:1;border-color:var(--accent);color:var(--accent)}
+.cost-wrap-sm{
+  display:flex;align-items:baseline;gap:4px;
+  background:var(--card);border:2px solid var(--border);
+  border-radius:var(--rs);padding:10px 16px;
+  transition:border-color .2s;
+}
+.cost-wrap-sm:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accentg)}
+.cost-currency-sm{font-family:var(--mono);font-size:20px;color:var(--muted);flex-shrink:0;line-height:1}
+.cost-input-sm{
+  font-family:var(--mono);font-size:30px;font-weight:700;
+  color:var(--text);width:100%;text-align:right;
+  -moz-appearance:textfield;line-height:1;
+}
+.cost-input-sm::-webkit-outer-spin-button,
+.cost-input-sm::-webkit-inner-spin-button{-webkit-appearance:none}
+.mm-tier-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--accentg);border:1px solid var(--bordhi);
+  border-radius:var(--rs);padding:9px 14px;
+}
+.mm-tier-val{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--success)}
+.btn-link{
+  font-size:9px;color:var(--muted);background:transparent;
+  border:none;cursor:pointer;letter-spacing:.3px;
+  text-decoration:underline;text-underline-offset:2px;
+  transition:color .15s;padding:0;
+}
+.btn-link:hover{color:var(--accent)}
+.modal-body-form{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.full-input{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rs);padding:9px 13px;
+  color:var(--text);font-size:12px;width:100%;
+  transition:border-color .15s;
+}
+.full-input:focus{border-color:var(--accent)}
+.full-input::placeholder{color:var(--muted)}
+
+/* ─── MANAGE MATERIALS PAGE ─── */
+.manage-header{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  margin-bottom:24px;gap:14px;flex-wrap:wrap;
+}
+.manage-title{font-size:17px;font-weight:800;margin-bottom:3px}
+.manage-sub{font-size:10px;color:var(--muted);letter-spacing:.2px;line-height:1.5}
+.manage-table-wrap{
+  overflow-x:auto;border:1px solid var(--border);
+  border-radius:var(--r);max-height:calc(100dvh - 220px);
+  overflow-y:auto;
+}
+.manage-table{width:100%;border-collapse:collapse;font-size:12px}
+.manage-table thead th{
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;
+  padding:10px 12px;text-align:left;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:2;
+}
+.manage-table td{padding:0;border-bottom:1px solid var(--border);vertical-align:middle}
+.manage-table tr:last-child td{border-bottom:none}
+.cat-group-row td{
+  background:var(--bg);padding:8px 12px;
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--muted);font-weight:700;
+  border-top:2px solid var(--border);border-bottom:1px solid var(--border);
+}
+.cat-count{
+  display:inline-block;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:1px 8px;
+  font-size:9px;font-weight:600;margin-left:8px;
+  text-transform:none;letter-spacing:0;
+}
+.manage-row td:not(.mt-del){cursor:pointer}
+.manage-row:hover td:not(.mt-del){background:rgba(79,124,255,.05)}
+body.light .manage-row:hover td:not(.mt-del){background:rgba(255,109,31,.05)}
+.cell-val{display:block;padding:9px 12px;min-height:37px;line-height:1.4}
+.mt-desc{min-width:220px}
+.mt-cat{min-width:80px;color:var(--muted);font-size:11px}
+.mt-id{min-width:70px;color:var(--muted);font-family:var(--mono);font-size:11px}
+.mt-unit{min-width:55px;color:var(--muted)}
+.mt-cost .cell-val,.mt-sell .cell-val{text-align:right;font-family:var(--mono)}
+.mt-sell .cell-val{color:var(--success)}
+.mt-del{width:36px;text-align:center;vertical-align:middle}
+.del-row-btn{
+  width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:5px;background:transparent;border:none;
+  color:var(--muted2);font-size:15px;cursor:pointer;
+  transition:all .15s;opacity:0;
+}
+.manage-row:hover .del-row-btn{opacity:1}
+.del-row-btn:hover{background:rgba(255,77,109,.14);color:var(--danger)}
+.cell-input{
+  display:block;width:100%;height:37px;padding:8px 12px;
+  background:var(--accentg);border:none;border-bottom:2px solid var(--accent);
+  color:var(--text);font-family:inherit;font-size:12px;font-weight:600;
+  -moz-appearance:textfield;
+}
+.cell-input::-webkit-outer-spin-button,
+.cell-input::-webkit-inner-spin-button{-webkit-appearance:none}
+.cell-input:focus{outline:none}
+.new-row td{background:var(--accentg)!important}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:640px){
+  .topbar{padding:0 14px;gap:8px}
+  .logo-sub{display:none}
+  .tab{padding:7px 12px;font-size:11px;letter-spacing:.3px}
+  .main{padding:28px 14px 80px}
+  .cost-wrap{padding:14px 20px}
+  .cost-input{font-size:36px}
+  .cost-currency{font-size:24px}
+  .sell-price{font-size:58px}
+  .result-card{padding:28px 20px 24px}
+  .sell-meta{gap:20px}
+  .meta-val{font-size:18px}
+  .opt-fields{gap:8px}
+  .opt-input{min-width:100px;font-size:11px}
+  .parts-grid{grid-template-columns:1fr 1fr}
+  .db-controls{flex-direction:column;align-items:stretch}
+  .cat-filter{min-width:unset}
+}
+@media(max-width:400px){
+  .tab{padding:7px 9px;font-size:10px}
+  .sell-price{font-size:46px}
+  .parts-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+
+/* ─── PWA / SAFE AREA ─── */
+body{
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.topbar{
+  padding-left:max(20px,env(safe-area-inset-left));
+  padding-right:max(20px,env(safe-area-inset-right));
+}
+.main{
+  padding-left:max(20px,env(safe-area-inset-left));
+  padding-right:max(20px,env(safe-area-inset-right));
+}
+
+/* ─── TABS SCROLL ON MOBILE ─── */
+.tabs{
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;flex-shrink:1;min-width:0;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{min-height:40px;display:flex;align-items:center;justify-content:center}
+
+/* Admin tab — warn colour */
+.tab[data-tab="admin"]{color:var(--warn)}
+.tab[data-tab="admin"].active{background:var(--warn);color:#fff;box-shadow:0 2px 10px rgba(245,166,35,.35)}
+
+/* ─── MIN TAP TARGETS ─── */
+.btn{min-height:40px}
+.icon-btn{min-height:40px;min-width:40px}
+.theme-toggle{min-height:40px}
+.sub-tab{min-height:40px;display:flex;align-items:center}
+.step-btn{min-height:44px;min-width:44px}
+
+/* ══════════════════════════════════════════
+   LOOKUP TAB — Phase 2
+══════════════════════════════════════════ */
+
+/* Search bar — sticky below topbar */
+.lookup-search-bar{
+  display:flex;gap:10px;
+  position:sticky;top:56px;z-index:80;
+  background:var(--bg);padding:16px 0 12px;
+  margin-bottom:4px;
+}
+.lookup-input{
+  flex:1;background:var(--surface);
+  border:1.5px solid var(--border);border-radius:14px;
+  padding:14px 18px;color:var(--text);
+  font-size:17px;font-family:var(--mono);
+  transition:border-color .2s,box-shadow .2s;
+  min-height:52px;
+}
+.lookup-input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 4px var(--accentg);outline:none;
+}
+.lookup-input::placeholder{color:var(--muted)}
+.lookup-search-btn{
+  min-width:80px;min-height:52px;
+  border-radius:14px;background:var(--accent);color:#fff;
+  font-size:13px;font-weight:700;letter-spacing:.3px;
+  border:none;cursor:pointer;transition:all .15s;flex-shrink:0;
+}
+.lookup-search-btn:hover{background:var(--accenth);transform:translateY(-1px)}
+.lookup-search-btn:active{transform:none}
+body.light .lookup-search-btn{background:var(--accent)}
+
+/* Unit info card */
+.lookup-unit-card{
+  background:var(--card);border:1px solid var(--bordhi);
+  border-radius:var(--r);padding:16px 20px;margin-bottom:16px;
+}
+.lookup-unit-model{
+  font-family:var(--mono);font-size:20px;font-weight:700;
+  color:var(--accent);margin-bottom:8px;letter-spacing:.5px;
+}
+.lookup-unit-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.lookup-unit-badge{
+  font-size:10px;font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;background:var(--accentg);
+  border:1px solid var(--bordhi);border-radius:20px;
+  padding:3px 10px;color:var(--accent);
+}
+.lookup-unit-notes{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}
+
+/* Parts list */
+.lookup-parts-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+}
+.lookup-parts-title{
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;
+}
+.lookup-part-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rs);padding:14px 16px;margin-bottom:8px;
+}
+.lookup-part-top{
+  display:flex;align-items:flex-start;
+  justify-content:space-between;gap:10px;margin-bottom:10px;
+}
+.lookup-part-desc{
+  font-size:13px;font-weight:700;color:var(--text);line-height:1.3;
+}
+.lookup-part-num{
+  font-family:var(--mono);font-size:11px;
+  color:var(--muted);margin-top:3px;
+}
+.lookup-part-cat{
+  font-size:8px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);background:var(--bg);
+  border:1px solid var(--border);border-radius:10px;
+  padding:3px 9px;flex-shrink:0;white-space:nowrap;
+}
+.lookup-superseded{
+  font-size:10px;color:var(--warn);
+  background:rgba(245,166,35,.08);
+  border:1px solid rgba(245,166,35,.2);border-radius:6px;
+  padding:6px 10px;margin-bottom:8px;line-height:1.4;
+}
+.lookup-supersedes{
+  font-size:10px;color:var(--muted);margin-bottom:8px;
+}
+.lookup-part-hours{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.lookup-hours-label{
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;flex:1;min-width:80px;
+}
+
+/* Labour controls row */
+.lookup-controls{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rs);padding:14px 16px;
+  margin-top:16px;
+  display:flex;gap:20px;align-items:center;flex-wrap:wrap;
+}
+.lookup-rate-wrap{
+  display:flex;align-items:center;gap:8px;flex:1;min-width:150px;
+}
+.lookup-rate-label{
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;white-space:nowrap;
+}
+
+/* Not found */
+.lookup-not-found{
+  text-align:center;padding:60px 20px 140px;
+}
+.lookup-nf-icon{font-size:48px;margin-bottom:12px;opacity:.25}
+.lookup-nf-model{
+  font-family:var(--mono);font-size:20px;font-weight:700;
+  color:var(--muted);margin-bottom:6px;letter-spacing:.5px;
+}
+.lookup-nf-text{font-size:12px;color:var(--muted);margin-bottom:28px}
+.lookup-report-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 32px;border-radius:14px;
+  background:var(--warn);color:#fff;
+  font-size:13px;font-weight:700;font-family:var(--head);
+  border:none;cursor:pointer;min-height:52px;
+  transition:all .2s;box-shadow:0 4px 16px rgba(245,166,35,.35);
+}
+.lookup-report-btn:hover{opacity:.9;transform:translateY(-1px)}
+.lookup-report-btn:active{transform:none}
+
+/* Not configured / setup prompt */
+.lookup-setup{
+  text-align:center;padding:48px 20px;
+  background:var(--surface);border:1px dashed var(--border);
+  border-radius:var(--r);
+}
+.lookup-setup-icon{font-size:32px;margin-bottom:10px;opacity:.4}
+.lookup-setup-text{
+  font-size:13px;color:var(--muted);
+  margin-bottom:20px;line-height:1.7;
+}
+
+/* Loading spinner */
+.lookup-loading{
+  text-align:center;padding:48px 20px;color:var(--muted);font-size:12px;
+}
+.spinner{
+  display:inline-block;width:22px;height:22px;
+  border:2.5px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite;
+  margin-right:8px;vertical-align:middle;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Sticky total bar */
+.lookup-total-bar{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);border-top:1px solid var(--bordhi);
+  padding:12px 20px;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  z-index:90;
+  display:flex;align-items:center;gap:14px;
+  box-shadow:0 -4px 28px rgba(0,0,0,.35);
+}
+.total-lbl{
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;flex-shrink:0;
+}
+.total-amount{
+  font-family:var(--mono);font-size:34px;font-weight:700;
+  color:var(--gold);letter-spacing:-1.5px;flex:1;
+  transition:color .2s;
+}
+.copy-total-btn{
+  min-height:44px;padding:0 18px;border-radius:var(--rs);
+  background:var(--card);border:1px solid var(--border);
+  color:var(--muted);font-size:11px;font-weight:700;
+  cursor:pointer;transition:all .15s;flex-shrink:0;
+}
+.copy-total-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Extra bottom padding in lookup tab so content clears sticky bar */
+#tab-lookup{padding-bottom:110px}
+
+/* ── Responsive tweaks ── */
+@media(max-width:480px){
+  .lookup-search-bar{gap:8px}
+  .lookup-input{font-size:15px;padding:12px 14px}
+  .lookup-unit-model{font-size:17px}
+  .total-amount{font-size:28px}
+  .lookup-total-bar{padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  .lookup-part-card{padding:12px 13px}
+}
+
+/* ══════════════════════════════════════════
+   ADMIN PANEL — Phase 3
+══════════════════════════════════════════ */
+
+/* Header */
+.admin-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;flex-wrap:wrap;gap:12px;
+}
+.admin-title-wrap{display:flex;align-items:center;gap:12px}
+.admin-title{font-size:17px;font-weight:800;letter-spacing:-.2px}
+.admin-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:8px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--warn);background:rgba(245,166,35,.1);
+  border:1px solid rgba(245,166,35,.25);border-radius:20px;
+  padding:4px 10px;font-weight:700;
+}
+
+/* Sub-tabs (warn colour for admin) */
+.admin-sub-tabs{
+  display:flex;gap:0;border-bottom:1px solid var(--border);
+  margin-bottom:24px;overflow-x:auto;scrollbar-width:none;
+}
+.admin-sub-tabs::-webkit-scrollbar{display:none}
+.admin-sub-tab{
+  padding:11px 20px;font-size:12px;font-weight:700;letter-spacing:.3px;
+  color:var(--muted);background:transparent;cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  transition:all .18s;white-space:nowrap;min-height:44px;
+  display:flex;align-items:center;gap:7px;
+}
+.admin-sub-tab:hover{color:var(--text)}
+.admin-sub-tab.active{color:var(--warn);border-bottom-color:var(--warn)}
+.admin-sub-view{display:none}
+.admin-sub-view.active{display:block;animation:fadeIn .18s ease}
+
+/* Reports badge */
+.reports-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--danger);color:#fff;border-radius:20px;
+  font-size:9px;font-weight:700;min-width:16px;height:16px;
+  padding:0 4px;line-height:1;
+}
+
+/* Admin controls row (search + buttons) */
+.admin-controls{
+  display:flex;gap:10px;margin-bottom:16px;
+  align-items:center;flex-wrap:wrap;
+}
+.admin-search-wrap{position:relative;flex:1;min-width:180px}
+.admin-search-icon{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  color:var(--muted);pointer-events:none;
+}
+.admin-search-input{
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rs);padding:10px 12px 10px 36px;
+  color:var(--text);font-size:12px;min-height:44px;
+  transition:border-color .15s;
+}
+.admin-search-input:focus{border-color:var(--warn);outline:none}
+.admin-search-input::placeholder{color:var(--muted)}
+
+/* Unit selector (Parts sub-tab) */
+.unit-selector-wrap{
+  display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;
+}
+.unit-selector{
+  flex:1;min-width:200px;min-height:44px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rs);padding:10px 30px 10px 13px;
+  color:var(--text);font-size:12px;cursor:pointer;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a6090'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+  transition:border-color .15s;
+}
+.unit-selector:focus{border-color:var(--warn);outline:none}
+
+/* Admin table wrapper — horizontal scroll on mobile */
+.admin-table-wrap{
+  overflow-x:auto;border:1px solid var(--border);
+  border-radius:var(--r);
+  max-height:calc(100dvh - 280px);overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.admin-table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}
+.admin-table thead th{
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;padding:10px 12px;text-align:left;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:2;
+}
+.admin-table tbody td{
+  padding:0;border-bottom:1px solid var(--border);vertical-align:middle;
+}
+.admin-table tbody tr:last-child td{border-bottom:none}
+.admin-table tbody tr.admin-row{cursor:pointer}
+.admin-table tbody tr.admin-row:hover td{background:rgba(79,124,255,.05)}
+body.light .admin-table tbody tr.admin-row:hover td{background:rgba(255,109,31,.05)}
+.acell{display:block;padding:10px 12px;min-height:42px;line-height:1.4;white-space:normal}
+.acell-mono{font-family:var(--mono);font-weight:700;color:var(--accent)}
+.acell-muted{color:var(--muted);font-size:11px}
+.acell-success{color:var(--success);font-family:var(--mono)}
+.acell-right{text-align:right}
+.acell-warn{color:var(--warn);font-size:10px}
+
+/* Row action buttons */
+.admin-row-actions{display:flex;gap:4px;padding:6px 8px;align-items:center}
+.admin-row-btn{
+  min-height:32px;min-width:52px;padding:4px 10px;
+  border-radius:6px;font-size:10px;font-weight:700;
+  cursor:pointer;transition:all .15s;
+  background:var(--card);border:1px solid var(--border);color:var(--muted);
+}
+.admin-row-btn:hover{border-color:var(--accent);color:var(--accent)}
+.admin-row-btn.danger:hover{border-color:var(--danger);color:var(--danger)}
+
+/* SVG icon helper */
+.icon-svg{display:inline-block;vertical-align:middle;flex-shrink:0}
+
+/* Reports queue */
+.report-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rs);padding:14px 16px;margin-bottom:8px;
+  display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;
+  transition:border-color .15s;
+}
+.report-card:hover{border-color:var(--bordhi)}
+.report-info{flex:1;min-width:150px}
+.report-model{
+  font-family:var(--mono);font-size:15px;font-weight:700;
+  color:var(--text);margin-bottom:3px;
+}
+.report-time{font-size:10px;color:var(--muted)}
+.report-status-badge{
+  font-size:8px;letter-spacing:1px;text-transform:uppercase;
+  font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;
+}
+.report-status-badge.pending{
+  color:var(--warn);background:rgba(245,166,35,.1);
+  border:1px solid rgba(245,166,35,.25);
+}
+.report-status-badge.reviewed{
+  color:var(--success);background:rgba(34,211,122,.1);
+  border:1px solid rgba(34,211,122,.25);
+}
+.report-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
+/* Labour defaults */
+.labour-defaults-tbl{width:100%;border-collapse:collapse}
+.labour-defaults-tbl thead th{
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;padding:10px 14px;text-align:left;
+  background:var(--surface);border-bottom:1px solid var(--border);
+}
+.labour-defaults-tbl tbody td{
+  padding:8px 14px;border-bottom:1px solid var(--border);font-size:12px;
+}
+.labour-defaults-tbl tbody tr:last-child td{border-bottom:none}
+.labour-defaults-tbl tbody tr:hover td{background:rgba(79,124,255,.04)}
+.ld-input{
+  width:72px;text-align:right;font-family:var(--mono);font-size:14px;
+  font-weight:700;color:var(--accent);
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--rs);padding:6px 10px;
+  min-height:38px;transition:border-color .15s;-moz-appearance:textfield;
+}
+.ld-input::-webkit-outer-spin-button,.ld-input::-webkit-inner-spin-button{-webkit-appearance:none}
+.ld-input:focus{border-color:var(--warn);outline:none}
+
+/* ── Unit & Part modals ── */
+.modal-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pm-cost-row{display:flex;align-items:center;gap:8px}
+.pm-auto-sell{
+  flex:1;background:var(--accentg);border:1px solid var(--bordhi);
+  border-radius:var(--rs);padding:9px 12px;
+  font-family:var(--mono);font-size:14px;font-weight:700;
+  color:var(--success);
+}
+.pm-superseded-note{
+  font-size:10px;color:var(--muted);padding:5px 0;line-height:1.5;
+}
+
+/* ── AI Research modal ── */
+.ai-sub-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:14px}
+.ai-sub-tab{
+  padding:9px 16px;font-size:11px;font-weight:700;
+  color:var(--muted);background:transparent;cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  min-height:40px;transition:all .15s;
+}
+.ai-sub-tab:hover{color:var(--text)}
+.ai-sub-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.ai-paste-area{
+  width:100%;min-height:90px;max-height:180px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rs);padding:10px 12px;
+  color:var(--text);font-family:var(--mono);font-size:11px;
+  resize:vertical;transition:border-color .15s;
+}
+.ai-paste-area:focus{border-color:var(--accent);outline:none}
+.ai-results-wrap{margin-top:12px}
+.ai-results-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.ai-results-tbl th{
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);padding:7px 8px;text-align:left;
+  border-bottom:1px solid var(--border);background:var(--surface);
+}
+.ai-results-tbl td{padding:5px 4px;border-bottom:1px solid var(--border)}
+.ai-results-tbl tr:last-child td{border-bottom:none}
+.ai-cell-input{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  border-radius:5px;padding:5px 8px;color:var(--text);
+  font-size:11px;font-family:inherit;
+}
+.ai-cell-input:focus{border-color:var(--accent);outline:none}
+.ai-cell-select{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  border-radius:5px;padding:5px 6px;color:var(--text);
+  font-size:10px;cursor:pointer;appearance:none;
+}
+.ai-loading{
+  text-align:center;padding:24px 12px;color:var(--muted);font-size:12px;
+}
+.ai-spinner{
+  display:inline-block;width:18px;height:18px;
+  border:2px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite;
+  margin-right:8px;vertical-align:middle;
+}
+.ai-error{
+  padding:12px;font-size:11px;color:var(--danger);line-height:1.6;
+  background:rgba(255,77,109,.06);border:1px solid rgba(255,77,109,.2);
+  border-radius:var(--rs);
+}
+.ai-hint{
+  font-size:10px;color:var(--muted);margin-top:6px;
+  font-family:var(--mono);line-height:1.6;
+}
+
+/* Empty admin state */
+.admin-empty{
+  text-align:center;padding:40px 20px;color:var(--muted);
+}
+.admin-empty-icon{margin-bottom:10px;opacity:.3}
+.admin-empty-text{font-size:12px}
+
+/* ── Responsive ── */
+@media(max-width:640px){
+  .admin-sub-tab{padding:11px 14px;font-size:11px}
+  .modal-grid-2{grid-template-columns:1fr}
+  .report-card{flex-direction:column;gap:10px}
+  .admin-controls{flex-direction:column;align-items:stretch}
+  .unit-selector-wrap{flex-direction:column;align-items:stretch}
+  .admin-table-wrap{max-height:calc(100dvh - 340px)}
+}
+
+/* ═══════════════════════════════════════════════
+   PHASE 4 — PWA POLISH
+   ═══════════════════════════════════════════════ */
+
+/* ─── OFFLINE BANNER ─── */
+#offline-banner{
+  display:none;align-items:center;justify-content:center;gap:8px;
+  background:var(--warn);color:#000;
+  text-align:center;padding:9px 16px;
+  font-size:12px;font-weight:700;letter-spacing:.4px;
+  position:sticky;top:56px;z-index:99;
+  border-bottom:1px solid rgba(0,0,0,.15);
+}
+#offline-banner.show{display:flex}
+/* push main down by banner height when shown */
+#offline-banner.show + .main,
+#offline-banner.show ~ .main{margin-top:0}
+
+/* ─── 48px TAP TARGET AUDIT ─── */
+/* Buttons already have min-height via padding; enforce minimums on mobile */
+@media(max-width:768px){
+  .btn{min-height:48px}
+  .btn-sm{min-height:40px;padding:8px 14px}
+  .icon-btn{width:44px;height:44px}
+  .theme-toggle{height:40px;padding:0 14px}
+  .tab{min-height:40px;padding:8px 14px}
+  /* Inputs */
+  input.setting-input,
+  select.opt-input,
+  .opt-input,
+  .lookup-search-input{min-height:48px}
+  /* Stepper buttons in labour cards */
+  .labour-adj{min-width:40px;min-height:40px}
+  /* Table action buttons */
+  .admin-table td button{min-height:36px;min-width:36px}
+  /* Report card actions */
+  .report-card .btn-sm{min-height:40px}
+}
+
+/* ─── TABLET LAYOUT (768px+) ─── */
+@media(min-width:768px){
+  .main{max-width:960px;padding:44px 40px 100px}
+  /* Part/Filter/Material: two-column result layout */
+  .results-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  /* Lookup: wider search, parts in 2 columns */
+  .lookup-parts-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+  }
+  /* Admin modal wider */
+  .modal-box{max-width:680px}
+  .modal-grid-2{grid-template-columns:1fr 1fr}
+  /* Admin table scrolls less on tablet */
+  .admin-table-wrap{max-height:calc(100dvh - 300px)}
+  /* Topbar tabs — no horizontal scroll needed */
+  .tabs{overflow-x:visible}
+}
+
+@media(min-width:1024px){
+  .main{max-width:1100px;padding:44px 60px 120px}
+  .lookup-parts-grid{grid-template-columns:repeat(3,1fr)}
+}
+
+/* ─── SAFE AREA (iPhone notch / Dynamic Island) ─── */
+body{
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.topbar{
+  padding-left:max(20px, env(safe-area-inset-left));
+  padding-right:max(20px, env(safe-area-inset-right));
+}
+#offline-banner{
+  padding-left:max(16px, env(safe-area-inset-left));
+  padding-right:max(16px, env(safe-area-inset-right));
+}
+/* Lookup total bar safe area */
+#lookup-total-bar{
+  padding-bottom:max(20px, env(safe-area-inset-bottom));
+}
+
+/* ─── INSTALL PROMPT BANNER ─── */
+#pwa-install-banner{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);border-top:1px solid var(--border);
+  padding:12px 20px max(12px,env(safe-area-inset-bottom));
+  flex-direction:row;align-items:center;gap:12px;
+  box-shadow:0 -8px 32px rgba(0,0,0,.4);z-index:200;
+}
+#pwa-install-banner.show{display:flex}
+#pwa-install-banner .pwa-title{flex:1;font-size:13px;font-weight:700}
+#pwa-install-banner .pwa-sub{font-size:11px;color:var(--muted);margin-top:2px}
+#pwa-install-banner .pwa-text{flex:1}
+
+/* ─── REDUCED MOTION ─── */
+@media(prefers-reduced-motion:reduce){
+  #offline-banner,#pwa-install-banner{transition:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ─── TOPBAR ─── -->
+<header class="topbar">
+  <div class="logo-mark">
+    <div class="logo-icon">TT</div>
+    <div>
+      <div class="logo-text">ThermalTech</div>
+      <div class="logo-sub">Pricing Suite</div>
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Pricing type">
+    <button class="tab active" data-tab="part"     role="tab" aria-selected="true"  onclick="switchTab('part')"    >Part</button>
+    <button class="tab"        data-tab="material" role="tab" aria-selected="false" onclick="switchTab('material')" >Material</button>
+    <button class="tab"        data-tab="filter"   role="tab" aria-selected="false" onclick="switchTab('filter')"   >Filter</button>
+    <button class="tab"        data-tab="lookup"   role="tab" aria-selected="false" onclick="switchTab('lookup')"   >Lookup</button>
+    <button class="tab"        data-tab="admin"    role="tab" aria-selected="false" onclick="switchTab('admin')"
+            id="admin-tab-btn" style="display:none">Admin ⚙</button>
+  </nav>
+
+  <div class="topbar-right">
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" aria-label="Toggle colour theme">
+      <span id="theme-icon">☀</span>
+      <span id="theme-label">Light</span>
+    </button>
+    <button class="icon-btn" onclick="openSettings()" aria-label="Settings" title="Data &amp; Settings">⚙</button>
+  </div>
+</header>
+
+<!-- ─── OFFLINE BANNER ─── -->
+<div id="offline-banner" role="alert" aria-live="assertive">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+  Offline — showing cached data
+</div>
+
+<!-- ─── MAIN ─── -->
+<main class="main">
+
+  <!-- ══ PART TAB ══ -->
+  <section class="tab-view active" id="tab-part" role="tabpanel" aria-labelledby="tab-btn-part">
+    <div class="opt-fields">
+      <input class="opt-input" id="part-num"  placeholder="Part #" aria-label="Part number" />
+      <input class="opt-input" id="part-desc" placeholder="Description" style="flex:2" aria-label="Part description" />
+      <select class="opt-input" id="part-cat" aria-label="Category">
+        <option value="">Category</option>
+        <option>Compressor</option>
+        <option>Motor / Fan Motor</option>
+        <option>Capacitor</option>
+        <option>Control Board</option>
+        <option>Valve</option>
+        <option>Sensor / Thermostat</option>
+        <option>Heat Exchanger</option>
+        <option>Coil</option>
+        <option>Pump</option>
+        <option>Igniter / Burner</option>
+        <option>Filter Dryer</option>
+        <option>Contactor</option>
+        <option>Relay</option>
+        <option>Transformer</option>
+        <option>Blower</option>
+        <option>Damper</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="hero-section">
+      <span class="cost-label">Your Cost</span>
+      <div class="cost-wrap" onclick="document.getElementById('part-cost').focus()">
+        <span class="cost-currency">$</span>
+        <input class="cost-input" id="part-cost" type="number" min="0" step="0.01"
+               placeholder="0.00" oninput="calcTab('part')" aria-label="Part cost in dollars" />
+      </div>
+    </div>
+
+    <!-- sell values kept hidden — used by calcTotal() and tier highlight -->
+    <span id="part-result"      style="display:none"></span>
+    <span id="part-sell"        style="display:none">—</span>
+    <span id="part-mult"        style="display:none">—</span>
+    <span id="part-margin"      style="display:none">—</span>
+    <span id="part-tier-badge"  style="display:none"></span>
+
+    <!-- Labour & Fees -->
+    <div class="labour-card">
+      <div class="labour-head">
+        <span class="tier-section-title">Labour &amp; Fees</span>
+      </div>
+      <div class="labour-body">
+        <div class="labour-row">
+          <div class="labour-field">
+            <span class="field-label">Hours</span>
+            <div class="stepper">
+              <button class="step-btn" onclick="adjustHours(-0.5)" aria-label="Decrease hours">−</button>
+              <input class="step-val" id="part-hours" type="number" value="0" min="0" step="0.5"
+                     oninput="calcTotal()" aria-label="Labour hours" />
+              <button class="step-btn" onclick="adjustHours(0.5)" aria-label="Increase hours">+</button>
+            </div>
+          </div>
+          <div class="labour-field">
+            <span class="field-label">Rate ($/hr)</span>
+            <div class="rate-wrap">
+              <span class="rate-prefix">$</span>
+              <input class="rate-input" id="part-rate" type="number" value="129" min="0"
+                     oninput="calcTotal()" aria-label="Labour hourly rate" />
+            </div>
+          </div>
+          <div class="labour-field">
+            <span class="field-label">Return Visit</span>
+            <label class="rv-toggle">
+              <input type="checkbox" id="part-rv" onchange="calcTotal()" />
+              <span class="rv-label" id="rv-fee-label">+$79.00</span>
+            </label>
+          </div>
+        </div>
+        <div class="breakdown">
+          <div class="bk-row">
+            <span class="bk-label">Parts Sell</span>
+            <span class="bk-val" id="bk-parts">—</span>
+          </div>
+          <div class="bk-row">
+            <span class="bk-label" id="bk-labour-lbl">Labour</span>
+            <span class="bk-val" id="bk-labour">$0.00</span>
+          </div>
+          <div class="bk-row" id="bk-rv-row" style="display:none">
+            <span class="bk-label">Return Visit</span>
+            <span class="bk-val" id="bk-rv">$0.00</span>
+          </div>
+          <div class="bk-total-row">
+            <span class="bk-total-label">Total</span>
+            <span class="bk-total-val" id="bk-total">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tier-section">
+      <div class="tier-section-head">
+        <span class="tier-section-title">Part Markup Tiers</span>
+      </div>
+      <table class="tier-table" id="part-tier-table" aria-label="Part markup tier reference">
+        <thead><tr><th>Cost Range</th><th>Multiplier</th><th class="td-r">Example Sell</th><th class="td-r">Margin</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══ MATERIAL TAB ══ -->
+  <section class="tab-view" id="tab-material" role="tabpanel">
+    <div class="sub-tabs" role="tablist" aria-label="Material mode">
+      <button class="sub-tab active" role="tab" onclick="switchSubTab('mat-calc')" id="sub-mat-calc">Calculator</button>
+      <button class="sub-tab"        role="tab" onclick="switchSubTab('mat-db')"   id="sub-mat-db">Database</button>
+    </div>
+
+    <!-- Calculator sub-view -->
+    <div class="sub-view active" id="mat-calc">
+      <div class="hero-section">
+        <span class="cost-label">Material Cost</span>
+        <div class="cost-wrap" onclick="document.getElementById('mat-cost').focus()">
+          <span class="cost-currency">$</span>
+          <input class="cost-input" id="mat-cost" type="number" min="0" step="0.01"
+                 placeholder="0.00" oninput="calcTab('mat')" aria-label="Material cost in dollars" />
+        </div>
+      </div>
+
+      <div class="result-card" id="mat-result">
+        <div class="sell-label">Sell Price</div>
+        <div class="sell-price" id="mat-sell">—</div>
+        <div class="sell-meta">
+          <div class="meta-item">
+            <div class="meta-val" id="mat-mult">—</div>
+            <div class="meta-lbl">Multiplier</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-val" id="mat-margin">—</div>
+            <div class="meta-lbl">Margin</div>
+          </div>
+        </div>
+        <div class="tier-badge" id="mat-tier-badge" style="display:none"></div>
+      </div>
+
+      <div class="tier-section">
+        <div class="tier-section-head">
+          <span class="tier-section-title">Material Markup Tiers</span>
+        </div>
+        <table class="tier-table" id="mat-tier-table" aria-label="Material markup tier reference">
+          <thead><tr><th>Cost Range</th><th>Multiplier</th><th class="td-r">Example Sell</th><th class="td-r">Margin</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Database sub-view -->
+    <div class="sub-view" id="mat-db">
+      <div class="db-controls">
+        <div class="search-wrap">
+          <span class="search-icon" aria-hidden="true">⊙</span>
+          <input class="search-input" id="mat-search" placeholder="Search description, category, ID…"
+                 oninput="filterMaterials()" aria-label="Search materials" />
+        </div>
+        <select class="cat-filter" id="mat-cat-filter" onchange="filterMaterials()" aria-label="Filter by category">
+          <option value="">All Categories</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="openManageMaterials()">⊞ Manage Materials</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('xlsx-upload').click()">↑ Import .xlsx</button>
+        <input type="file" id="xlsx-upload" accept=".xlsx,.xls" style="display:none" onchange="importXlsx(this)" />
+      </div>
+
+      <div class="parts-grid" id="mat-grid"></div>
+      <div class="parts-count-lbl" id="mat-count"></div>
+    </div>
+  </section>
+
+  <!-- ══ FILTER TAB ══ -->
+  <section class="tab-view" id="tab-filter" role="tabpanel">
+    <div class="hero-section">
+      <span class="cost-label">Filter Cost</span>
+      <div class="cost-wrap" onclick="document.getElementById('filt-cost').focus()">
+        <span class="cost-currency">$</span>
+        <input class="cost-input" id="filt-cost" type="number" min="0" step="0.01"
+               placeholder="0.00" oninput="calcTab('filt')" aria-label="Filter cost in dollars" />
+      </div>
+    </div>
+
+    <div class="result-card" id="filt-result">
+      <div class="sell-label">Sell Price</div>
+      <div class="sell-price" id="filt-sell">—</div>
+      <div class="sell-meta">
+        <div class="meta-item">
+          <div class="meta-val" id="filt-mult">—</div>
+          <div class="meta-lbl">Multiplier</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-val" id="filt-margin">—</div>
+          <div class="meta-lbl">Margin</div>
+        </div>
+      </div>
+      <div class="tier-badge" id="filt-tier-badge" style="display:none"></div>
+    </div>
+
+    <div class="tier-section">
+      <div class="tier-section-head">
+        <span class="tier-section-title">Filter Markup Tiers</span>
+      </div>
+      <table class="tier-table" id="filt-tier-table" aria-label="Filter markup tier reference">
+        <thead><tr><th>Cost Range</th><th>Multiplier</th><th class="td-r">Example Sell</th><th class="td-r">Margin</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══ MANAGE MATERIALS VIEW ══ -->
+  <section class="tab-view" id="view-manage-mat" role="tabpanel">
+    <div class="manage-header">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="closeManageMaterials()">← Back</button>
+        <div>
+          <div class="manage-title">Manage Materials</div>
+          <div class="manage-sub">Click any cell to edit · Changes save automatically · Editing cost auto-recalculates sell price</div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="addManageRow()">+ Add Material</button>
+    </div>
+    <div class="manage-table-wrap">
+      <table class="manage-table" id="manage-table" aria-label="Materials database">
+        <thead>
+          <tr>
+            <th style="min-width:220px">Description</th>
+            <th style="min-width:80px">Category</th>
+            <th style="min-width:70px">ID</th>
+            <th style="min-width:55px">Unit</th>
+            <th style="text-align:right;min-width:90px">Cost ($)</th>
+            <th style="text-align:right;min-width:90px">Sell ($)</th>
+            <th style="width:36px"></th>
+          </tr>
+        </thead>
+        <tbody id="manage-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══ LOOKUP TAB ══ -->
+  <section class="tab-view" id="tab-lookup" role="tabpanel">
+
+    <!-- Sticky search bar -->
+    <div class="lookup-search-bar">
+      <input class="lookup-input" id="lookup-input" type="text"
+             placeholder="Enter model number…"
+             autocomplete="off" autocorrect="off" autocapitalize="characters"
+             spellcheck="false"
+             oninput="scheduleLookup()"
+             onkeydown="if(event.key==='Enter'){clearTimeout(lookupTimer);lookupModel()}"
+             aria-label="Unit model number" />
+      <button class="lookup-search-btn" onclick="lookupModel()" aria-label="Search">
+        Search
+      </button>
+    </div>
+
+    <!-- Dynamic result area -->
+    <div id="lookup-result" aria-live="polite"></div>
+
+    <!-- Sticky total bar (shown after result) -->
+    <div class="lookup-total-bar" id="lookup-total-bar" style="display:none" aria-live="polite">
+      <span class="total-lbl">Total</span>
+      <span class="total-amount" id="lookup-total">$0.00</span>
+      <button class="copy-total-btn" onclick="copyTotal()" aria-label="Copy total to clipboard">
+        Copy
+      </button>
+    </div>
+
+  </section>
+
+  <!-- ══ ADMIN PANEL ══ -->
+  <section class="tab-view" id="tab-admin" role="tabpanel">
+
+    <!-- Header -->
+    <div class="admin-header">
+      <div class="admin-title-wrap">
+        <svg class="icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <div>
+          <div class="admin-title">Admin Panel</div>
+          <span class="admin-badge">ADMIN MODE</span>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="exitAdminMode()" aria-label="Exit admin mode">
+        <svg class="icon-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        Exit Admin
+      </button>
+    </div>
+
+    <!-- Sub-tabs -->
+    <div class="admin-sub-tabs" role="tablist">
+      <button class="admin-sub-tab active" data-subtab="admin-units" role="tab" onclick="switchAdminSubTab('admin-units')">
+        <svg class="icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Units
+      </button>
+      <button class="admin-sub-tab" data-subtab="admin-parts" role="tab" onclick="switchAdminSubTab('admin-parts')">
+        <svg class="icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
+        Parts
+      </button>
+      <button class="admin-sub-tab" data-subtab="admin-labour" role="tab" onclick="switchAdminSubTab('admin-labour')">
+        <svg class="icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Labour
+      </button>
+      <button class="admin-sub-tab" data-subtab="admin-reports" role="tab" onclick="switchAdminSubTab('admin-reports')">
+        <svg class="icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        Reports
+        <span class="reports-badge" id="reports-badge" style="display:none">0</span>
+      </button>
+    </div>
+
+    <!-- UNITS sub-view -->
+    <div class="admin-sub-view active" id="admin-units" role="tabpanel">
+      <div class="admin-controls">
+        <div class="admin-search-wrap">
+          <svg class="admin-search-icon icon-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="admin-search-input" id="units-search" placeholder="Search model, brand…" oninput="filterAdminUnits()" aria-label="Search units" />
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openUnitModal(null)">
+          <svg class="icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          Add Unit
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('units-xlsx-upload').click()">
+          <svg class="icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import xlsx
+        </button>
+        <input type="file" id="units-xlsx-upload" accept=".xlsx,.xls" style="display:none" onchange="importUnitsXlsx(this)" />
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table" aria-label="Units database">
+          <thead><tr>
+            <th style="min-width:160px">Model Number</th>
+            <th style="min-width:100px">Brand</th>
+            <th style="min-width:110px">Type</th>
+            <th style="min-width:80px">Tonnage</th>
+            <th style="min-width:160px">Notes</th>
+            <th style="min-width:130px;text-align:right">Actions</th>
+          </tr></thead>
+          <tbody id="admin-units-tbody">
+            <tr><td colspan="6"><div class="admin-empty">
+              <div class="admin-empty-text">Configure Supabase in Settings to begin.</div>
+            </div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PARTS sub-view -->
+    <div class="admin-sub-view" id="admin-parts" role="tabpanel">
+      <div class="unit-selector-wrap">
+        <select class="unit-selector" id="admin-parts-unit-select" onchange="loadAdminParts(this.value)" aria-label="Select unit">
+          <option value="">Select a unit…</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="openPartModal(null,adminCurrentUnit)">
+          <svg class="icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          Add Part
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="openAIResearchModal(adminCurrentUnit,null)">
+          <svg class="icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3c-1 3-4 5-7 6 0 5 3 10 7 12 4-2 7-7 7-12-3-1-6-3-7-6z"/></svg>
+          Research AI
+        </button>
+      </div>
+      <div id="admin-parts-hint" style="font-size:11px;color:var(--muted);margin-bottom:12px">Select a unit above to view its parts.</div>
+      <div class="admin-table-wrap" id="admin-parts-table-wrap" style="display:none">
+        <table class="admin-table" aria-label="Parts list">
+          <thead><tr>
+            <th style="min-width:100px">Part #</th>
+            <th style="min-width:200px">Description</th>
+            <th style="min-width:110px">Category</th>
+            <th style="min-width:80px;text-align:right">Cost</th>
+            <th style="min-width:80px;text-align:right">Sell</th>
+            <th style="min-width:90px">Superseded By</th>
+            <th style="min-width:90px">Supersedes</th>
+            <th style="width:56px"></th>
+          </tr></thead>
+          <tbody id="admin-parts-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LABOUR sub-view -->
+    <div class="admin-sub-view" id="admin-labour" role="tabpanel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:2px">Default Labour Hours</div>
+          <div style="font-size:10px;color:var(--muted)">Techs can adjust per job. These are the starting values.</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveAllLabourDefaults()">Save All</button>
+      </div>
+      <div class="tier-section" id="labour-defaults-wrap">
+        <div class="admin-empty"><div class="admin-empty-text">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- REPORTS sub-view -->
+    <div class="admin-sub-view" id="admin-reports" role="tabpanel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:2px">Reported Models</div>
+          <div style="font-size:10px;color:var(--muted)">Models techs flagged as missing from the database.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadReports()">
+          <svg class="icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div id="reports-list"><div class="admin-empty"><div class="admin-empty-text">Loading…</div></div></div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- ─── MATERIAL EDIT / ADD MODAL ─── -->
+<div class="modal-overlay" id="mat-edit-modal" onclick="handleMatModalClick(event)">
+  <div class="modal" style="max-width:480px" role="dialog" aria-modal="true" aria-labelledby="mat-modal-title">
+    <div class="modal-header">
+      <span class="modal-title" id="mat-modal-title">Edit Material</span>
+      <button class="modal-close" onclick="closeMatModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body-form">
+
+      <!-- Cost — the star -->
+      <div class="mfield">
+        <span class="field-label">Cost ($)</span>
+        <div class="cost-wrap-sm" onclick="document.getElementById('mm-cost').focus()">
+          <span class="cost-currency-sm">$</span>
+          <input class="cost-input-sm" id="mm-cost" type="number" min="0" step="0.01"
+                 placeholder="0.00" oninput="mmCalcSell()" aria-label="Material cost" />
+        </div>
+      </div>
+
+      <!-- Auto-calculated tier result -->
+      <div class="mm-tier-row" id="mm-tier-row" style="display:none">
+        <span class="field-label" style="margin:0">Auto-calculated Sell</span>
+        <span class="mm-tier-val" id="mm-sell-calc">—</span>
+      </div>
+
+      <!-- Sell price — editable, auto-filled -->
+      <div class="mfield">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
+          <span class="field-label">Sell Price ($)</span>
+          <button class="btn-link" onclick="mmResetSell()" tabindex="-1">↻ Reset to auto</button>
+        </div>
+        <div class="rate-wrap" style="height:40px;width:100%">
+          <span class="rate-prefix">$</span>
+          <input class="rate-input" id="mm-sell" type="number" min="0" step="0.01"
+                 placeholder="Auto-calculated" style="width:100%;font-size:15px" aria-label="Sell price override" />
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="mfield">
+        <span class="field-label">Description <span style="color:var(--danger)">*</span></span>
+        <input class="full-input" id="mm-desc" placeholder='e.g. Black Iron Nipple 1/2" (6")' aria-label="Description" />
+      </div>
+
+      <!-- Category with autocomplete -->
+      <div class="mfield">
+        <span class="field-label">Category</span>
+        <input class="full-input" id="mm-cat" placeholder="e.g. Black Iron Couplings"
+               list="mm-cat-list" aria-label="Category" />
+        <datalist id="mm-cat-list"></datalist>
+      </div>
+
+      <!-- Unit + ID side by side -->
+      <div style="display:flex;gap:10px">
+        <div class="mfield" style="flex:1">
+          <span class="field-label">Unit</span>
+          <input class="full-input" id="mm-unit" placeholder="ea, ft, 50ft…" aria-label="Unit" />
+        </div>
+        <div class="mfield" style="flex:1">
+          <span class="field-label">ID / Part #</span>
+          <input class="full-input" id="mm-id" placeholder="Optional" aria-label="Part ID" />
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="mm-delete-btn" onclick="deleteMatItem()" style="margin-right:auto">Delete</button>
+      <button class="btn btn-ghost" onclick="closeMatModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMatItem()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SETTINGS MODAL ─── -->
+<div class="modal-overlay" id="settings-modal" onclick="handleModalClick(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Data &amp; Settings</span>
+      <button class="modal-close" onclick="closeSettings()" aria-label="Close settings">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:80dvh;overflow-y:auto">
+
+      <!-- Pricing defaults -->
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px">Pricing</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Default Labour Rate</div>
+          <div class="setting-desc">$/hr applied to Part tab</div>
+        </div>
+        <input class="setting-input" id="s-labour-rate" type="number" value="129" min="0"
+               onchange="saveAppSettings()" aria-label="Default labour rate" />
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Default Return Visit Fee</div>
+          <div class="setting-desc">Travel surcharge on Part tab</div>
+        </div>
+        <input class="setting-input" id="s-return-fee" type="number" value="79" min="0"
+               onchange="saveAppSettings()" aria-label="Default return visit fee" />
+      </div>
+
+      <div class="mdivider"></div>
+
+      <!-- Supabase -->
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px">Supabase (Model Lookup DB)</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Project URL</div>
+          <div class="setting-desc">https://xxx.supabase.co</div>
+        </div>
+        <input class="setting-input" id="s-sb-url" type="url" placeholder="https://…"
+               style="width:180px;text-align:left;font-size:10px"
+               onchange="saveAppSettings()" aria-label="Supabase URL" />
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Anon Key</div>
+          <div class="setting-desc">Public API key</div>
+        </div>
+        <input class="setting-input" id="s-sb-key" type="password" placeholder="eyJ…"
+               style="width:180px;text-align:left;font-size:10px"
+               onchange="saveAppSettings()" aria-label="Supabase anon key" />
+      </div>
+
+      <div class="mdivider"></div>
+
+      <!-- Admin -->
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px">Admin Access</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Admin PIN</div>
+          <div class="setting-desc">4-digit PIN to unlock admin panel</div>
+        </div>
+        <input class="setting-input" id="s-admin-pin" type="password" maxlength="8"
+               placeholder="1234" style="letter-spacing:4px;width:90px"
+               onchange="saveAppSettings()" aria-label="Admin PIN" />
+      </div>
+      <button class="btn btn-secondary btn-full" onclick="closeSettings();openPinModal()">🔒 Enter Admin Mode</button>
+
+      <div class="mdivider"></div>
+
+      <!-- AI -->
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px">AI Research (Admin)</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Ollama URL</div>
+          <div class="setting-desc">Local AI (Phi-3 mini)</div>
+        </div>
+        <input class="setting-input" id="s-ollama-url" type="url" placeholder="http://localhost:11434"
+               style="width:180px;text-align:left;font-size:10px"
+               onchange="saveAppSettings()" aria-label="Ollama URL" />
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Claude API Key</div>
+          <div class="setting-desc">Optional fallback when Ollama offline</div>
+        </div>
+        <input class="setting-input" id="s-claude-key" type="password" placeholder="sk-ant-…"
+               style="width:180px;text-align:left;font-size:10px"
+               onchange="saveAppSettings()" aria-label="Claude API key" />
+      </div>
+
+      <div class="mdivider"></div>
+
+      <!-- Backup -->
+      <button class="btn btn-secondary btn-full" onclick="exportDB()">↓ Export Backup (JSON)</button>
+      <button class="btn btn-secondary btn-full" onclick="document.getElementById('import-db').click()">↑ Restore Backup (JSON)</button>
+      <input type="file" id="import-db" accept=".json" style="display:none" onchange="importDB(this)" />
+      <div class="mdivider"></div>
+      <button class="btn btn-danger btn-full" onclick="resetAll()">⚠ Reset All Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── UNIT MODAL ─── -->
+<div class="modal-overlay" id="unit-modal" onclick="handleUnitModalClick(event)">
+  <div class="modal" style="max-width:440px" role="dialog" aria-modal="true" aria-labelledby="unit-modal-title">
+    <div class="modal-header">
+      <span class="modal-title" id="unit-modal-title">Add Unit</span>
+      <button class="modal-close" onclick="closeUnitModal()" aria-label="Close">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body-form">
+      <div class="mfield">
+        <span class="field-label">Model Number <span style="color:var(--danger)">*</span></span>
+        <input class="full-input" id="um-model" placeholder="e.g. CARRIER-24ACC636A003"
+               style="font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.5px;text-transform:uppercase"
+               oninput="this.value=this.value.toUpperCase()" aria-label="Model number" />
+      </div>
+      <div class="modal-grid-2">
+        <div class="mfield">
+          <span class="field-label">Brand</span>
+          <input class="full-input" id="um-brand" placeholder="e.g. Carrier, Lennox…" list="um-brand-list" aria-label="Brand" />
+          <datalist id="um-brand-list">
+            <option>Carrier</option><option>Lennox</option><option>Trane</option>
+            <option>York</option><option>Rheem</option><option>Goodman</option>
+            <option>Daikin</option><option>Mitsubishi</option><option>Bosch</option>
+          </datalist>
+        </div>
+        <div class="mfield">
+          <span class="field-label">Unit Type</span>
+          <select class="full-input" id="um-type" aria-label="Unit type" style="appearance:none;cursor:pointer">
+            <option value="">Select type…</option>
+            <option>AC</option><option>Furnace</option><option>Heat Pump</option>
+            <option>Air Handler</option><option>Boiler</option><option>Package Unit</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="mfield">
+        <span class="field-label">Tonnage / BTU</span>
+        <input class="full-input" id="um-tonnage" placeholder="e.g. 3 Ton, 36,000 BTU" aria-label="Tonnage" />
+      </div>
+      <div class="mfield">
+        <span class="field-label">Notes</span>
+        <input class="full-input" id="um-notes" placeholder="Optional notes for techs" aria-label="Notes" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="um-delete-btn" style="display:none;margin-right:auto" onclick="deleteUnit()">Delete Unit</button>
+      <button class="btn btn-ghost" onclick="closeUnitModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUnit()">Save Unit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PART MODAL ─── -->
+<div class="modal-overlay" id="part-modal" onclick="handlePartModalClick(event)">
+  <div class="modal" style="max-width:480px" role="dialog" aria-modal="true" aria-labelledby="part-modal-title">
+    <div class="modal-header">
+      <div>
+        <span class="modal-title" id="part-modal-title">Add Part</span>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">Unit: <span id="pm-unit-label" style="font-family:var(--mono);color:var(--accent)"></span></div>
+      </div>
+      <button class="modal-close" onclick="closePartModal()" aria-label="Close">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body-form">
+      <!-- Cost + auto sell -->
+      <div class="mfield">
+        <span class="field-label">Your Cost ($) <span style="color:var(--danger)">*</span></span>
+        <div class="cost-wrap-sm" onclick="document.getElementById('pm-cost').focus()">
+          <span class="cost-currency-sm">$</span>
+          <input class="cost-input-sm" id="pm-cost" type="number" min="0" step="0.01"
+                 placeholder="0.00" oninput="pmCalcSell()" aria-label="Part cost" />
+        </div>
+      </div>
+      <div class="mm-tier-row" id="pm-tier-row" style="display:none">
+        <span class="field-label" style="margin:0">Auto Sell Price</span>
+        <span class="mm-tier-val" id="pm-auto-sell">—</span>
+      </div>
+      <div class="mfield">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="field-label">Sell Price ($)</span>
+          <button class="btn-link" onclick="pmResetSell()" tabindex="-1">↻ Reset to auto</button>
+        </div>
+        <div class="rate-wrap" style="height:40px;width:100%">
+          <span class="rate-prefix">$</span>
+          <input class="rate-input" id="pm-sell" type="number" min="0" step="0.01"
+                 placeholder="Auto" style="width:100%;font-size:15px" aria-label="Sell price" />
+        </div>
+      </div>
+      <!-- Description + Category -->
+      <div class="mfield">
+        <span class="field-label">Description <span style="color:var(--danger)">*</span></span>
+        <input class="full-input" id="pm-desc" placeholder="e.g. Scroll Compressor 3-Ton" aria-label="Description" />
+      </div>
+      <div class="modal-grid-2">
+        <div class="mfield">
+          <span class="field-label">Category</span>
+          <select class="full-input" id="pm-cat" aria-label="Category" style="appearance:none;cursor:pointer">
+            <option value="">Select…</option>
+            <option>Compressor</option><option>Motor / Fan Motor</option><option>Capacitor</option>
+            <option>Control Board</option><option>Valve</option><option>Sensor / Thermostat</option>
+            <option>Heat Exchanger</option><option>Coil</option><option>Pump</option>
+            <option>Igniter / Burner</option><option>Filter Dryer</option><option>Contactor</option>
+            <option>Relay</option><option>Transformer</option><option>Blower</option>
+            <option>Damper</option><option>Other</option>
+          </select>
+        </div>
+        <div class="mfield">
+          <span class="field-label">Part Number</span>
+          <input class="full-input" id="pm-partnum" placeholder="OEM part #" aria-label="Part number" />
+        </div>
+      </div>
+      <!-- Superseded -->
+      <div class="modal-grid-2">
+        <div class="mfield">
+          <span class="field-label">Superseded By</span>
+          <input class="full-input" id="pm-superby" placeholder="Newer part #" aria-label="Superseded by" />
+          <div class="pm-superseded-note">Leave blank if current.</div>
+        </div>
+        <div class="mfield">
+          <span class="field-label">Supersedes</span>
+          <input class="full-input" id="pm-supersedes" placeholder="Older part #" aria-label="Supersedes" />
+          <div class="pm-superseded-note">Leave blank if original.</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="pm-delete-btn" style="display:none;margin-right:auto" onclick="deleteCurrentPart()">Delete</button>
+      <button class="btn btn-ghost" onclick="closePartModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePart()">Save Part</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── AI RESEARCH MODAL ─── -->
+<div class="modal-overlay" id="ai-modal" onclick="handleAIModalClick(event)">
+  <div class="modal" style="max-width:520px;max-height:90dvh;display:flex;flex-direction:column" role="dialog" aria-modal="true" aria-labelledby="ai-modal-title">
+    <div class="modal-header" style="flex-shrink:0">
+      <div>
+        <span class="modal-title" id="ai-modal-title">AI Parts Research</span>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">Powered by Ollama Phi-3 mini · Claude API fallback</div>
+      </div>
+      <button class="modal-close" onclick="closeAIModal()" aria-label="Close">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="padding:16px 20px;flex:1;overflow-y:auto">
+      <div class="mfield" style="margin-bottom:14px">
+        <span class="field-label">Model Number</span>
+        <input class="full-input" id="ai-model-input" placeholder="e.g. CARRIER-24ACC636A003"
+               style="font-family:var(--mono);text-transform:uppercase"
+               oninput="this.value=this.value.toUpperCase()" aria-label="Model number for AI research" />
+      </div>
+      <!-- Sub-tabs -->
+      <div class="ai-sub-tabs">
+        <button class="ai-sub-tab active" onclick="switchAISubTab('ai-ask')">Ask AI</button>
+        <button class="ai-sub-tab" onclick="switchAISubTab('ai-paste')">Paste Parts Page</button>
+      </div>
+      <!-- Ask AI view -->
+      <div id="ai-ask-view">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6">
+          AI will suggest common parts for this model based on its training knowledge.<br>
+          <span style="color:var(--warn)">Review results carefully before saving.</span>
+        </div>
+        <button class="btn btn-primary btn-full" id="ai-research-btn" onclick="runAIResearch('ask')">
+          <svg class="icon-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3c-1 3-4 5-7 6 0 5 3 10 7 12 4-2 7-7 7-12-3-1-6-3-7-6z"/></svg>
+          Research with AI
+        </button>
+      </div>
+      <!-- Paste HTML view -->
+      <div id="ai-paste-view" style="display:none">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.6">
+          Open a parts page (partselect.com, repairclinic.com), select all text, paste below.
+        </div>
+        <textarea class="ai-paste-area" id="ai-paste-content" placeholder="Paste parts page content here…" aria-label="Parts page content to extract from"></textarea>
+        <button class="btn btn-primary btn-full" style="margin-top:10px" onclick="runAIResearch('paste')">
+          <svg class="icon-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3c-1 3-4 5-7 6 0 5 3 10 7 12 4-2 7-7 7-12-3-1-6-3-7-6z"/></svg>
+          Extract Parts
+        </button>
+      </div>
+      <!-- Results -->
+      <div id="ai-results-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── PIN MODAL ─── -->
+<div class="modal-overlay" id="pin-modal" onclick="handlePinModalClick(event)">
+  <div class="modal" style="max-width:300px" role="dialog" aria-modal="true" aria-labelledby="pin-modal-title">
+    <div class="modal-header">
+      <span class="modal-title" id="pin-modal-title">🔒 Admin Access</span>
+      <button class="modal-close" onclick="closePinModal()" aria-label="Close">✕</button>
+    </div>
+    <div style="padding:24px;text-align:center">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:16px">Enter Admin PIN</div>
+      <input id="pin-input" type="password" maxlength="8" inputmode="numeric"
+             style="font-family:var(--mono);font-size:28px;font-weight:700;width:140px;
+                    text-align:center;letter-spacing:8px;background:var(--surface);
+                    border:2px solid var(--border);border-radius:12px;padding:12px;
+                    color:var(--text);transition:border-color .2s;display:block;margin:0 auto 16px"
+             placeholder="••••"
+             onkeydown="if(event.key==='Enter')verifyPin()"
+             onfocus="this.style.borderColor='var(--warn)'"
+             onblur="this.style.borderColor='var(--border)'"
+             aria-label="Admin PIN" />
+      <button class="btn btn-primary btn-full" style="background:var(--warn)" onclick="verifyPin()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<!-- ─── PWA INSTALL BANNER ─── -->
+<div id="pwa-install-banner" role="complementary" aria-label="Install app">
+  <div class="logo-icon" style="flex-shrink:0">TT</div>
+  <div class="pwa-text">
+    <div class="pwa-title">Install ThermalTech</div>
+    <div class="pwa-sub">Add to Home Screen for offline access</div>
+  </div>
+  <button class="btn btn-primary btn-sm" id="pwa-install-btn" style="flex-shrink:0">Install</button>
+  <button class="btn btn-sm" onclick="dismissInstallBanner()" style="flex-shrink:0;background:transparent;border:1px solid var(--border)" aria-label="Dismiss">✕</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// MARKUP TIERS
+// ═══════════════════════════════════════════════
+const PART_TIERS=[
+  {max:25,   mult:5.0,  lbl:"≤ $25"},
+  {max:50,   mult:3.5,  lbl:"≤ $50"},
+  {max:100,  mult:2.5,  lbl:"≤ $100"},
+  {max:250,  mult:2.6,  lbl:"≤ $250"},
+  {max:500,  mult:2.25, lbl:"≤ $500"},
+  {max:1000, mult:1.75, lbl:"≤ $1,000"},
+  {max:2000, mult:1.6,  lbl:"≤ $2,000"},
+  {max:Infinity,mult:1.4,lbl:"> $2,000"},
+];
+const MAT_TIERS=[
+  {max:2,       mult:3.5,lbl:"≤ $2"},
+  {max:5,       mult:3.0,lbl:"≤ $5"},
+  {max:15,      mult:2.5,lbl:"≤ $15"},
+  {max:50,      mult:2.2,lbl:"≤ $50"},
+  {max:150,     mult:1.8,lbl:"≤ $150"},
+  {max:Infinity,mult:1.5,lbl:"> $150"},
+];
+const FILT_TIERS=[
+  {max:20,      mult:2.5,lbl:"≤ $20"},
+  {max:50,      mult:2.2,lbl:"≤ $50"},
+  {max:100,     mult:1.8,lbl:"≤ $100"},
+  {max:Infinity,mult:1.5,lbl:"> $100"},
+];
+
+function applyMarkup(cost,tiers){
+  const t=tiers.find(x=>cost<=x.max)||tiers[tiers.length-1];
+  const sell=cost*t.mult;
+  return{sell,margin:((sell-cost)/sell*100).toFixed(1),mult:t.mult,lbl:t.lbl};
+}
+
+// ═══════════════════════════════════════════════
+// MATERIAL DATABASE
+// ═══════════════════════════════════════════════
+const MAT_DB_RAW=[{"id":"1.1","description":"Gas Copper Coil 3/8\"","category":"Copper Gas (Type G)","unit":"50ft","avg_cost":121.06,"sell_price":217.91},{"id":"1.2","description":"Gas Copper Coil 1/2\"","category":"Copper Gas (Type G)","unit":"50ft","avg_cost":246.81,"sell_price":370.21},{"id":"1.3","description":"Gas Copper Coil 3/4\"","category":"Copper Gas (Type G)","unit":"50ft","avg_cost":260.65,"sell_price":390.98},{"id":"1.4","description":"Gas Copper Coil 5/8\"","category":"Copper Gas (Type G)","unit":"50ft","avg_cost":244.45,"sell_price":366.68},{"id":"2.1.1","description":"Brass Connector Flare x Male 3/8\"x3/8\"","category":"Brass Connectors - Flare x Male","unit":"ea","avg_cost":2.22,"sell_price":6.65},{"id":"2.1.2","description":"Brass Connector Flare x Male 3/8\"x1/2\"","category":"Brass Connectors - Flare x Male","unit":"ea","avg_cost":4.34,"sell_price":13.02},{"id":"2.1.3","description":"Brass Connector Flare x Male 1/2\"x3/8\"","category":"Brass Connectors - Flare x Male","unit":"ea","avg_cost":4.42,"sell_price":13.26},{"id":"2.1.4","description":"Brass Connector Flare x Male 1/2\"x1/2\"","category":"Brass Connectors - Flare x Male","unit":"ea","avg_cost":4.38,"sell_price":13.13},{"id":"2.1.5","description":"Brass Connector Flare x Male 5/8\"x1/2\"","category":"Brass Connectors - Flare x Male","unit":"ea","avg_cost":7.56,"sell_price":18.89},{"id":"2.1.6","description":"Brass Connector Flare x Male 5/8\"x3/4\"","category":"Brass Connectors - Flare x Male","unit":"ea","avg_cost":9.36,"sell_price":23.40},{"id":"2.2.1","description":"Brass Forged Flare Nut 1/4\"","category":"Brass Forged Flare Nuts","unit":"ea","avg_cost":1.55,"sell_price":5.41},{"id":"2.2.2","description":"Brass Forged Flare Nut 3/8\"","category":"Brass Forged Flare Nuts","unit":"ea","avg_cost":2.34,"sell_price":7.02},{"id":"2.2.3","description":"Brass Forged Flare Nut 1/2\"","category":"Brass Forged Flare Nuts","unit":"ea","avg_cost":3.04,"sell_price":9.11},{"id":"2.2.4","description":"Brass Forged Flare Nut 3/4\"","category":"Brass Forged Flare Nuts","unit":"ea","avg_cost":10.95,"sell_price":27.37},{"id":"2.2.5","description":"Brass Forged Flare Nut 5/8\"","category":"Brass Forged Flare Nuts","unit":"ea","avg_cost":3.91,"sell_price":11.73},{"id":"2.3.1","description":"Brass Sleeve Flare x Flare 3/8\"x3/8\"","category":"Brass Sleeves - Flare x Flare","unit":"ea","avg_cost":1.68,"sell_price":5.88},{"id":"2.3.2","description":"Brass Sleeve Flare x Flare 3/4\"x3/4\"","category":"Brass Sleeves - Flare x Flare","unit":"ea","avg_cost":13.96,"sell_price":34.90},{"id":"2.3.3","description":"Brass Sleeve Flare x Flare 1/2\"x1/2\"","category":"Brass Sleeves - Flare x Flare","unit":"ea","avg_cost":2.31,"sell_price":6.94},{"id":"2.4.1","description":"90° Brass Elbow 3/8\"x3/8\"","category":"90° Brass Elbows - Flare x Male","unit":"ea","avg_cost":2.99,"sell_price":8.96},{"id":"2.4.2","description":"90° Brass Elbow 1/2\"x1/2\"","category":"90° Brass Elbows - Flare x Male","unit":"ea","avg_cost":4.56,"sell_price":13.67},{"id":"2.4.3","description":"90° Brass Elbow 3/4\"x3/4\"","category":"90° Brass Elbows - Flare x Male","unit":"ea","avg_cost":12.17,"sell_price":30.43},{"id":"B2.1.1","description":"Black Iron Nipple 1/2\" (6\")","category":"Black Iron Threaded Steel Pipe","unit":"6\"","avg_cost":3.92,"sell_price":11.75},{"id":"B2.1.2","description":"Black Iron Nipple 3/4\" (6\")","category":"Black Iron Threaded Steel Pipe","unit":"6\"","avg_cost":4.59,"sell_price":13.77},{"id":"B2.1.3","description":"Black Iron Nipple 1\" (6\")","category":"Black Iron Threaded Steel Pipe","unit":"6\"","avg_cost":6.04,"sell_price":15.09},{"id":"B2.1.4","description":"Black Iron Nipple 1 1/4\" (6\")","category":"Black Iron Threaded Steel Pipe","unit":"6\"","avg_cost":7.20,"sell_price":18.01},{"id":"B2.1.5","description":"Black Iron Nipple 1 1/2\" (6\")","category":"Black Iron Threaded Steel Pipe","unit":"6\"","avg_cost":8.19,"sell_price":20.47},{"id":"B2.1.6","description":"Black Iron Nipple 2\" (6\")","category":"Black Iron Threaded Steel Pipe","unit":"6\"","avg_cost":10.13,"sell_price":25.32},{"id":"B2.1.7","description":"Black Iron Nipple 3/8\" (6\")","category":"Black Iron Threaded Steel Pipe","unit":"6\"","avg_cost":2.43,"sell_price":7.29},{"id":"B2.2.1","description":"Black Iron 90° Elbow 3/8\"","category":"Black Iron 90° Elbow","unit":"ea","avg_cost":2.61,"sell_price":7.82},{"id":"B2.2.2","description":"Black Iron 90° Elbow 1/2\"","category":"Black Iron 90° Elbow","unit":"ea","avg_cost":1.95,"sell_price":6.83},{"id":"B2.2.3","description":"Black Iron 90° Elbow 3/4\"","category":"Black Iron 90° Elbow","unit":"ea","avg_cost":2.36,"sell_price":7.08},{"id":"B2.2.4","description":"Black Iron 90° Elbow 1\"","category":"Black Iron 90° Elbow","unit":"ea","avg_cost":3.13,"sell_price":9.38},{"id":"B2.2.5","description":"Black Iron 90° Elbow 1 1/4\"","category":"Black Iron 90° Elbow","unit":"ea","avg_cost":4.09,"sell_price":12.26},{"id":"B2.2.6","description":"Black Iron 90° Elbow 1 1/2\"","category":"Black Iron 90° Elbow","unit":"ea","avg_cost":6.14,"sell_price":15.35},{"id":"B2.2.7","description":"Black Iron 90° Elbow 2\"","category":"Black Iron 90° Elbow","unit":"ea","avg_cost":8.10,"sell_price":20.25},{"id":"B2.3.1","description":"Black Iron Union 3/8\"","category":"Black Iron Unions","unit":"ea","avg_cost":10.81,"sell_price":27.03},{"id":"B2.3.2","description":"Black Iron Union 1/2\"","category":"Black Iron Unions","unit":"ea","avg_cost":20.43,"sell_price":44.94},{"id":"B2.3.3","description":"Black Iron Union 3/4\"","category":"Black Iron Unions","unit":"ea","avg_cost":30.46,"sell_price":67.01},{"id":"B2.3.4","description":"Black Iron Union 1\"","category":"Black Iron Unions","unit":"ea","avg_cost":32.97,"sell_price":72.53},{"id":"B2.3.5","description":"Black Iron Union 1 1/4\"","category":"Black Iron Unions","unit":"ea","avg_cost":43.95,"sell_price":96.68},{"id":"B2.3.6","description":"Black Iron Union 1 1/2\"","category":"Black Iron Unions","unit":"ea","avg_cost":58.76,"sell_price":105.77},{"id":"B2.3.7","description":"Black Iron Union 2\"","category":"Black Iron Unions","unit":"ea","avg_cost":82.88,"sell_price":149.19},{"id":"B2.5.1","description":"Black Iron Coupling 3/8\"","category":"Black Iron Couplings","unit":"ea","avg_cost":2.02,"sell_price":6.05},{"id":"B2.5.2","description":"Black Iron Coupling 1/2\"","category":"Black Iron Couplings","unit":"ea","avg_cost":1.33,"sell_price":4.64},{"id":"B2.5.3","description":"Black Iron Coupling 3/4\"","category":"Black Iron Couplings","unit":"ea","avg_cost":1.82,"sell_price":6.38},{"id":"B2.5.4","description":"Black Iron Coupling 1\"","category":"Black Iron Couplings","unit":"ea","avg_cost":2.94,"sell_price":8.83},{"id":"B2.5.5","description":"Black Iron Coupling 1 1/4\"","category":"Black Iron Couplings","unit":"ea","avg_cost":4.34,"sell_price":13.02},{"id":"B2.5.6","description":"Black Iron Coupling 1 1/2\"","category":"Black Iron Couplings","unit":"ea","avg_cost":5.25,"sell_price":13.13},{"id":"B2.5.7","description":"Black Iron Coupling 2\"","category":"Black Iron Couplings","unit":"ea","avg_cost":6.83,"sell_price":17.08},{"id":"B2.6.1","description":"Black Iron Tee 1/4\"","category":"Black Iron Tees","unit":"ea","avg_cost":3.22,"sell_price":9.66},{"id":"B2.6.2","description":"Black Iron Tee 3/8\"","category":"Black Iron Tees","unit":"ea","avg_cost":3.22,"sell_price":9.66},{"id":"B2.6.3","description":"Black Iron Tee 1/2\"","category":"Black Iron Tees","unit":"ea","avg_cost":2.26,"sell_price":6.77},{"id":"B2.6.4","description":"Black Iron Tee 3/4\"","category":"Black Iron Tees","unit":"ea","avg_cost":3.12,"sell_price":9.36},{"id":"B2.6.5","description":"Black Iron Tee 1\"","category":"Black Iron Tees","unit":"ea","avg_cost":4.90,"sell_price":14.69},{"id":"B2.6.6","description":"Black Iron Tee 1 1/4\"","category":"Black Iron Tees","unit":"ea","avg_cost":7.35,"sell_price":18.37},{"id":"B2.6.7","description":"Black Iron Tee 1 1/2\"","category":"Black Iron Tees","unit":"ea","avg_cost":9.79,"sell_price":24.48},{"id":"B2.6.8","description":"Black Iron Tee 2\"","category":"Black Iron Tees","unit":"ea","avg_cost":12.10,"sell_price":30.24},{"id":"B2.8.1","description":"Black Iron Cap 3/8\"","category":"Black Iron Caps","unit":"ea","avg_cost":2.03,"sell_price":6.08},{"id":"B2.8.2","description":"Black Iron Cap 1/2\"","category":"Black Iron Caps","unit":"ea","avg_cost":1.42,"sell_price":4.98},{"id":"B2.8.3","description":"Black Iron Cap 3/4\"","category":"Black Iron Caps","unit":"ea","avg_cost":1.47,"sell_price":5.15},{"id":"B2.8.4","description":"Black Iron Cap 1\"","category":"Black Iron Caps","unit":"ea","avg_cost":2.07,"sell_price":6.20},{"id":"B2.8.5","description":"Black Iron Cap 1 1/4\"","category":"Black Iron Caps","unit":"ea","avg_cost":3.21,"sell_price":9.63},{"id":"B2.8.6","description":"Black Iron Cap 1 1/2\"","category":"Black Iron Caps","unit":"ea","avg_cost":4.21,"sell_price":12.62},{"id":"B2.8.7","description":"Black Iron Cap 2\"","category":"Black Iron Caps","unit":"ea","avg_cost":5.84,"sell_price":14.61},{"id":"3.1.1","description":"GASTITE CSST 1/2\" (125ft)","category":"GASTITE CSST","unit":"125ft","avg_cost":582.11,"sell_price":873.16},{"id":"3.1.2","description":"GASTITE CSST 3/4\" (250ft)","category":"GASTITE CSST","unit":"250ft","avg_cost":1487.05,"sell_price":2230.57},{"id":"3.1.3","description":"GASTITE CSST 1\" (150ft)","category":"GASTITE CSST","unit":"150ft","avg_cost":1158.07,"sell_price":1737.10},{"id":"3.1.4","description":"GASTITE CSST 1 1/4\" (50ft)","category":"GASTITE CSST","unit":"50ft","avg_cost":516.42,"sell_price":774.63},{"id":"3.1.5","description":"GASTITE CSST 1 1/2\" (50ft)","category":"GASTITE CSST","unit":"50ft","avg_cost":933.21,"sell_price":1399.82},{"id":"3.2.1","description":"GASTITE FlashShield 1/2\" (25ft)","category":"GASTITE FlashShield (Black)","unit":"25ft","avg_cost":107.19,"sell_price":192.94},{"id":"3.2.2","description":"GASTITE FlashShield 1/2\" (50ft)","category":"GASTITE FlashShield (Black)","unit":"50ft","avg_cost":263.09,"sell_price":394.64},{"id":"3.2.5","description":"GASTITE FlashShield 3/4\" (25ft)","category":"GASTITE FlashShield (Black)","unit":"25ft","avg_cost":169.13,"sell_price":253.70},{"id":"3.2.6","description":"GASTITE FlashShield 3/4\" (50ft)","category":"GASTITE FlashShield (Black)","unit":"50ft","avg_cost":339.28,"sell_price":508.91},{"id":"3.3.1","description":"GASTITE XR Brass Fitting 1/2\"","category":"GASTITE XR Brass Fittings","unit":"ea","avg_cost":16.46,"sell_price":36.21},{"id":"3.3.2","description":"GASTITE XR Brass Fitting 3/4\"","category":"GASTITE XR Brass Fittings","unit":"ea","avg_cost":22.73,"sell_price":50.00},{"id":"3.3.3","description":"GASTITE XR Brass Fitting 1\"","category":"GASTITE XR Brass Fittings","unit":"ea","avg_cost":34.99,"sell_price":76.98},{"id":"3.3.4","description":"GASTITE XR Brass Fitting 1 1/4\"","category":"GASTITE XR Brass Fittings","unit":"ea","avg_cost":66.95,"sell_price":120.50},{"id":"3.3.5","description":"GASTITE XR Brass Fitting 1 1/2\"","category":"GASTITE XR Brass Fittings","unit":"ea","avg_cost":136.43,"sell_price":245.57},{"id":"3.3.6","description":"GASTITE XR Brass Fitting 2\"","category":"GASTITE XR Brass Fittings","unit":"ea","avg_cost":170.30,"sell_price":255.44},{"id":"4.1.2","description":"Underground Gas Poly Pipe 3/4\" (150ft)","category":"Underground Gas Poly Pipe","unit":"150ft","avg_cost":162.50,"sell_price":243.75},{"id":"4.1.3","description":"Underground Gas Poly Pipe 1\" (150ft)","category":"Underground Gas Poly Pipe","unit":"150ft","avg_cost":178.57,"sell_price":267.86},{"id":"4.1.5","description":"Underground Gas Poly Pipe 1 1/4\" (150ft)","category":"Underground Gas Poly Pipe","unit":"150ft","avg_cost":301.79,"sell_price":452.69},{"id":"4.2.1","description":"Underground Gas Poly Riser 3/4\"","category":"Underground Gas Poly Riser","unit":"ea","avg_cost":134.18,"sell_price":241.52},{"id":"4.2.2","description":"Underground Gas Poly Riser 1\"","category":"Underground Gas Poly Riser","unit":"ea","avg_cost":151.21,"sell_price":226.82},{"id":"4.2.3","description":"Underground Gas Poly Riser 1 1/4\"","category":"Underground Gas Poly Riser","unit":"ea","avg_cost":216.13,"sell_price":324.20},{"id":"4.2.4","description":"Underground Gas Poly Riser 2\"","category":"Underground Gas Poly Riser","unit":"ea","avg_cost":479.14,"sell_price":718.71},{"id":"5.1.1","description":"Wardflex CSST 1/2\" (Per foot)","category":"WARDFLEX CSST","unit":"ft","avg_cost":3.30,"sell_price":9.90},{"id":"5.1.2","description":"Wardflex CSST 3/4\" (Per foot)","category":"WARDFLEX CSST","unit":"ft","avg_cost":5.00,"sell_price":15.00},{"id":"5.1.3","description":"Wardflex CSST 1\" (Per foot)","category":"WARDFLEX CSST","unit":"ft","avg_cost":7.00,"sell_price":17.50},{"id":"5.1.4","description":"Wardflex CSST 1 1/4\" (Per foot)","category":"WARDFLEX CSST","unit":"ft","avg_cost":9.00,"sell_price":22.50},{"id":"5.2.1","description":"Wardflex Male Fitting 1/2\"","category":"WARDFLEX Male Fittings","unit":"ea","avg_cost":11.67,"sell_price":29.17},{"id":"5.2.2","description":"Wardflex Male Fitting 3/4\"","category":"WARDFLEX Male Fittings","unit":"ea","avg_cost":18.33,"sell_price":40.33},{"id":"5.2.3","description":"Wardflex Male Fitting 1\"","category":"WARDFLEX Male Fittings","unit":"ea","avg_cost":25.00,"sell_price":55.00},{"id":"5.2.4","description":"Wardflex Male Fitting 1 1/4\"","category":"WARDFLEX Male Fittings","unit":"ea","avg_cost":31.60,"sell_price":69.52},{"id":"6.1","description":"Insulated Flex Duct 4\" (25ft)","category":"Insulated Flex Duct","unit":"25ft","avg_cost":102.08,"sell_price":183.74},{"id":"6.2","description":"Insulated Flex Duct 5\" (25ft)","category":"Insulated Flex Duct","unit":"25ft","avg_cost":103.08,"sell_price":185.54},{"id":"6.3","description":"Insulated Flex Duct 6\" (25ft)","category":"Insulated Flex Duct","unit":"25ft","avg_cost":86.49,"sell_price":155.68},{"id":"6.4","description":"Insulated Flex Duct 7\" (25ft)","category":"Insulated Flex Duct","unit":"25ft","avg_cost":120.81,"sell_price":217.46},{"id":"6.5","description":"Insulated Flex Duct 8\" (25ft)","category":"Insulated Flex Duct","unit":"25ft","avg_cost":112.85,"sell_price":203.13},{"id":"6.6","description":"Insulated Flex Duct 9\" (25ft)","category":"Insulated Flex Duct","unit":"25ft","avg_cost":86.73,"sell_price":156.11},{"id":"6.7","description":"Insulated Flex Duct 10\" (25ft)","category":"Insulated Flex Duct","unit":"25ft","avg_cost":218.68,"sell_price":328.01},{"id":"6.8","description":"Insulated Flex Duct 12\" (25ft)","category":"Insulated Flex Duct","unit":"25ft","avg_cost":102.59,"sell_price":184.66},{"id":"7.1","description":"Aluminum Flex Pipe 3\" (120ft)","category":"Aluminum Flex Pipes","unit":"120ft","avg_cost":8.08,"sell_price":20.20},{"id":"7.2","description":"Aluminum Flex Pipe 4\" (120ft)","category":"Aluminum Flex Pipes","unit":"120ft","avg_cost":8.49,"sell_price":21.23},{"id":"7.3","description":"Aluminum Flex Pipe 5\" (120ft)","category":"Aluminum Flex Pipes","unit":"120ft","avg_cost":12.20,"sell_price":30.50},{"id":"7.4","description":"Aluminum Flex Pipe 6\" (120ft)","category":"Aluminum Flex Pipes","unit":"120ft","avg_cost":14.65,"sell_price":36.63},{"id":"7.5","description":"Aluminum Flex Pipe 7\" (120ft)","category":"Aluminum Flex Pipes","unit":"120ft","avg_cost":18.63,"sell_price":40.99},{"id":"7.6","description":"Aluminum Flex Pipe 8\" (120ft)","category":"Aluminum Flex Pipes","unit":"120ft","avg_cost":21.61,"sell_price":47.54},{"id":"7.7","description":"Aluminum Flex Pipe 10\" (120ft)","category":"Aluminum Flex Pipes","unit":"120ft","avg_cost":26.77,"sell_price":58.89},{"id":"7.8","description":"Aluminum Flex Pipe 12\" (120ft)","category":"Aluminum Flex Pipes","unit":"120ft","avg_cost":32.20,"sell_price":70.84},{"id":"7.9","description":"Aluminum Flex Pipe 14\" (120ft)","category":"Aluminum Flex Pipes","unit":"120ft","avg_cost":36.77,"sell_price":80.89}];
+
+// Reducing Tees
+[["1/2\"x1/2\"x3/8\"",2.74,8.22],["3/4\"x1/2\"x1/2\"",3.31,9.92],["3/4\"x1/2\"x3/4\"",8.55,21.38],["3/4\"x3/4\"x1/2\"",2.98,8.94],["3/4\"x3/4\"x1\"",5.07,12.68],["1\"x1/2\"x1/2\"",9.25,23.11],["1\"x1/2\"x3/4\"",3.99,11.97],["1\"x3/4\"x1/2\"",9.25,23.11],["1\"x3/4\"x3/4\"",3.99,11.97],["1\"x1\"x1/2\"",3.59,10.77],["1 1/4\"x3/4\"x3/4\"",6.00,15.00],["1 1/4\"x1\"x3/4\"",5.41,13.53],["1 1/4\"x1 1/4\"x1\"",6.00,15.00],["1 1/2\"x1 1/4\"x3/4\"",7.57,18.93],["1 1/2\"x1 1/2\"x3/4\"",6.84,17.10],["2\"x2\"x1/2\"",10.73,26.83],["2\"x2\"x3/4\"",9.68,24.20],["2\"x2\"x1\"",9.68,24.20]].forEach((t,i)=>MAT_DB_RAW.push({id:`RT${i+1}`,description:`Black Iron Reducing Tee ${t[0]}`,category:"Black Iron Reducing Tees",unit:"ea",avg_cost:t[1],sell_price:t[2]}));
+// Reducing Couplings
+[["3/8\"x1/4\"",2.06,6.18],["1/2\"x1/4\"",1.62,5.66],["1/2\"x3/8\"",1.62,5.66],["3/4\"x1/2\"",1.90,6.64],["1\"x1/2\"",4.06,12.18],["1\"x3/4\"",2.76,8.27],["1 1/4\"x3/4\"",5.76,14.39],["1 1/4\"x1\"",4.76,14.29],["1 1/2\"x3/4\"",5.69,14.22],["1 1/2\"x1\"",5.69,14.22],["2\"x3/4\"",8.62,21.55],["2\"x1\"",8.62,21.55],["2\"x1 1/2\"",8.62,21.55]].forEach((t,i)=>MAT_DB_RAW.push({id:`RC${i+1}`,description:`Black Iron Reducing Coupling ${t[0]}`,category:"Black Iron Reducing Couplings",unit:"ea",avg_cost:t[1],sell_price:t[2]}));
+// 90° Reducing Elbows
+[["1/2\"x3/8\"",1.39,4.87],["3/4\"x3/8\"",1.84,6.44],["3/4\"x1/2\"",1.84,6.44],["1\"x1/2\"",2.79,8.37],["1\"x3/4\"",2.79,8.37],["1 1/4\"x1/2\"",4.49,13.47],["1 1/4\"x3/4\"",4.49,13.47],["1 1/4\"x1\"",4.49,13.47],["1 1/2\"x1/2\"",5.56,13.90],["1 1/2\"x3/4\"",5.56,13.90],["1 1/2\"x1\"",5.56,13.90],["1 1/2\"x1 1/4\"",5.56,13.90],["2\"x3/4\"",8.23,20.58],["2\"x1\"",8.23,20.58],["2\"x1 1/2\"",8.23,20.58]].forEach((t,i)=>MAT_DB_RAW.push({id:`RE${i+1}`,description:`Black Iron 90° Reducing Elbow ${t[0]}`,category:"Black Iron 90° Reducing Elbows",unit:"ea",avg_cost:t[1],sell_price:t[2]}));
+
+let matDB=[];
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  loadTheme();
+  loadAppSettings();
+  initMatDB();
+  buildTierTable('part', PART_TIERS);
+  buildTierTable('mat',  MAT_TIERS);
+  buildTierTable('filt', FILT_TIERS);
+  // keyboard shortcuts
+  document.addEventListener('keydown',e=>{
+    if(e.altKey){
+      if(e.key==='1'){e.preventDefault();switchTab('part')}
+      if(e.key==='2'){e.preventDefault();switchTab('material')}
+      if(e.key==='3'){e.preventDefault();switchTab('filter')}
+      if(e.key==='4'){e.preventDefault();switchTab('lookup')}
+    }
+    if(e.key==='Escape'){closeSettings();closePinModal();closeUnitModal?.();closePartModal?.();closeAIModal?.();}
+  });
+  // focus Part cost on load
+  setTimeout(()=>document.getElementById('part-cost')?.focus(),80);
+  // register service worker
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('SW reg failed:',e));
+  }
+  // Phase 4: offline banner + PWA install
+  initOffline();
+  initPwaInstall();
+});
+
+// ═══════════════════════════════════════════════
+// MATERIAL DB
+// ═══════════════════════════════════════════════
+function initMatDB(){
+  const saved=localStorage.getItem('hvac_matdb');
+  matDB=saved?JSON.parse(saved):[...MAT_DB_RAW];
+  populateMatCatFilter();
+  renderMaterials(matDB);
+}
+function populateMatCatFilter(){
+  const cats=[...new Set(matDB.map(p=>p.category))].sort();
+  const sel=document.getElementById('mat-cat-filter');
+  sel.innerHTML='<option value="">All Categories</option>';
+  cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+}
+function renderMaterials(items){
+  const grid=document.getElementById('mat-grid');
+  const lbl=document.getElementById('mat-count');
+  const show=items.slice(0,150);
+  lbl.textContent=`Showing ${show.length} of ${items.length} items`+(items.length>150?' (first 150 shown)':'');
+  if(!show.length){
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">○</div><div class="empty-state-text">No items match your search.</div></div>`;
+    return;
+  }
+  grid.innerHTML=show.map(p=>`
+    <div class="part-card" onclick="useMaterialCost(${p.avg_cost})" title="Click to use cost in calculator">
+      <div class="part-cat">${xe(p.category)} · ${xe(p.unit||'')}</div>
+      <div class="part-desc">${xe(p.description)}</div>
+      <div class="part-prices">
+        <span class="part-cost">Cost: $${f2(p.avg_cost)}</span>
+        <span style="color:var(--muted2);font-size:10px">→</span>
+        <span class="part-sell">$${f2(p.sell_price)}</span>
+      </div>
+    </div>`).join('');
+}
+function filterMaterials(){
+  const q=document.getElementById('mat-search').value.toLowerCase();
+  const cat=document.getElementById('mat-cat-filter').value;
+  let r=matDB;
+  if(cat) r=r.filter(p=>p.category===cat);
+  if(q)   r=r.filter(p=>(p.description+p.category+(p.id||'')).toLowerCase().includes(q));
+  renderMaterials(r);
+}
+function useMaterialCost(cost){
+  switchTab('material');
+  switchSubTab('mat-calc');
+  const inp=document.getElementById('mat-cost');
+  inp.value=f2(cost);
+  calcTab('mat');
+  inp.focus();
+  toast('Cost loaded — check sell price above','info');
+}
+
+// ═══════════════════════════════════════════════
+// CALCULATOR
+// ═══════════════════════════════════════════════
+const TIER_MAP={part:PART_TIERS, mat:MAT_TIERS, filt:FILT_TIERS};
+const INPUT_MAP={part:'part-cost', mat:'mat-cost', filt:'filt-cost'};
+const RESULT_MAP={part:'part-result', mat:'mat-result', filt:'filt-result'};
+const SELL_MAP={part:'part-sell', mat:'mat-sell', filt:'filt-sell'};
+const MULT_MAP={part:'part-mult', mat:'mat-mult', filt:'filt-mult'};
+const MARGIN_MAP={part:'part-margin', mat:'mat-margin', filt:'filt-margin'};
+const BADGE_MAP={part:'part-tier-badge', mat:'mat-tier-badge', filt:'filt-tier-badge'};
+const TABLE_MAP={part:'part-tier-table', mat:'mat-tier-table', filt:'filt-tier-table'};
+
+function calcTab(key){
+  const raw=document.getElementById(INPUT_MAP[key]).value;
+  const cost=parseFloat(raw);
+  const card=document.getElementById(RESULT_MAP[key]);
+  if(!raw||isNaN(cost)||cost<=0){
+    if(card?.classList) card.classList.remove('has-val');
+    document.getElementById(SELL_MAP[key]).textContent='—';
+    document.getElementById(MULT_MAP[key]).textContent='—';
+    document.getElementById(MARGIN_MAP[key]).textContent='—';
+    const badge=document.getElementById(BADGE_MAP[key]);
+    if(badge) badge.style.display='none';
+    highlightTierRow(TABLE_MAP[key],null);
+    if(key==='part') calcTotal();
+    return;
+  }
+  const r=applyMarkup(cost,TIER_MAP[key]);
+  if(card?.classList) card.classList.add('has-val');
+  document.getElementById(SELL_MAP[key]).textContent='$'+f2(r.sell);
+  document.getElementById(MULT_MAP[key]).textContent='×'+r.mult;
+  document.getElementById(MARGIN_MAP[key]).textContent=r.margin+'%';
+  const badge=document.getElementById(BADGE_MAP[key]);
+  badge.textContent='Tier: '+r.lbl+' → ×'+r.mult+' multiplier';
+  badge.style.display='inline-block';
+  highlightTierRow(TABLE_MAP[key],r.lbl);
+  if(key==='part') calcTotal();
+}
+
+function highlightTierRow(tableId,activeLbl){
+  const tbody=document.querySelector('#'+tableId+' tbody');
+  if(!tbody) return;
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const lbl=tr.dataset.lbl;
+    tr.classList.toggle('t-active',lbl===activeLbl);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// TIER TABLES
+// ═══════════════════════════════════════════════
+function buildTierTable(key,tiers){
+  const tbody=document.querySelector('#'+TABLE_MAP[key]+' tbody');
+  if(!tbody) return;
+  tbody.innerHTML=tiers.map(t=>{
+    const ex=t.max===Infinity?(tiers[tiers.length-2]?.max||200)*1.5:t.max;
+    const sell=ex*t.mult;
+    const margin=((sell-ex)/sell*100).toFixed(1);
+    return`<tr data-lbl="${t.lbl}">
+      <td>${t.lbl}</td>
+      <td class="td-accent">×${t.mult}</td>
+      <td class="td-r td-success">$${f2(sell)}</td>
+      <td class="td-r td-gold">${margin}%</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════
+function switchTab(tab){
+  document.querySelectorAll('.tab[data-tab]').forEach(t=>{
+    const id=t.dataset.tab;
+    t.classList.toggle('active',id===tab);
+    t.setAttribute('aria-selected',id===tab);
+  });
+  document.querySelectorAll('.tab-view').forEach(v=>v.classList.remove('active'));
+  const view=document.getElementById('tab-'+tab);
+  if(view) view.classList.add('active');
+  const focusMap={part:'part-cost',material:'mat-cost',filter:'filt-cost',lookup:'lookup-input'};
+  if(focusMap[tab]) setTimeout(()=>document.getElementById(focusMap[tab])?.focus(),60);
+}
+function switchSubTab(id){
+  document.querySelectorAll('.sub-tab').forEach((t,i)=>{
+    const ids=['mat-calc','mat-db'];
+    t.classList.toggle('active',ids[i]===id);
+  });
+  document.querySelectorAll('.sub-view').forEach(v=>v.classList.remove('active'));
+  const view=document.getElementById(id);
+  if(view) view.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════
+// EXCEL IMPORT (Materials)
+// ═══════════════════════════════════════════════
+function importXlsx(input){
+  const file=input.files[0];if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      if(typeof XLSX==='undefined'){toast('SheetJS not available — check internet connection','error');return;}
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      let added=0,updated=0;
+      wb.SheetNames.forEach(sn=>{
+        const data=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
+        data.forEach(row=>{
+          const id=(row['Part #']||row['PartNum']||row['Code']||row['Slno']||'').toString().trim();
+          const desc=(row['Description']||row['Material']||'').toString().trim();
+          const cost=pf(row['Cost']||row['AVG']||row['avg_cost']||row['Supplier Cost #1']||row['Price']||0);
+          const sell=pf(row['Sell Price']||row['sell_price']||cost||0);
+          const cat=(row['Category']||row['category']||sn||'Imported').toString().trim();
+          const unit=(row['Unit']||row['unit']||'ea').toString().trim();
+          if(!desc) return;
+          const idx=matDB.findIndex(p=>p.id===id&&id);
+          if(idx>=0){matDB[idx].avg_cost=cost||matDB[idx].avg_cost;matDB[idx].sell_price=sell||matDB[idx].sell_price;updated++;}
+          else{matDB.push({id,description:desc,category:cat,unit,avg_cost:cost,sell_price:sell});added++;}
+        });
+      });
+      localStorage.setItem('hvac_matdb',JSON.stringify(matDB));
+      populateMatCatFilter();
+      renderMaterials(matDB);
+      toast(`Imported: ${added} new · ${updated} updated`,'success');
+    }catch(err){toast('Import error: '+err.message,'error');}
+    input.value='';
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ═══════════════════════════════════════════════
+// BACKUP / RESTORE / RESET
+// ═══════════════════════════════════════════════
+function openSettings(){document.getElementById('settings-modal').classList.add('open')}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open')}
+function handleModalClick(e){if(e.target===document.getElementById('settings-modal'))closeSettings();}
+
+function exportDB(){
+  const data=JSON.stringify({matDB,exportedAt:new Date().toISOString()},null,2);
+  dl(data,'thermaltech-backup.json','application/json');
+  toast('Backup exported','success');
+  closeSettings();
+}
+function importDB(input){
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(d.matDB){matDB=d.matDB;localStorage.setItem('hvac_matdb',JSON.stringify(matDB));populateMatCatFilter();renderMaterials(matDB);}
+      toast('Backup restored','success');closeSettings();
+    }catch(err){toast('Restore failed: '+err.message,'error');}
+  };
+  r.readAsText(input.files[0]);input.value='';
+}
+function resetAll(){
+  if(!confirm('Reset all material database data to defaults? This cannot be undone.')) return;
+  localStorage.removeItem('hvac_matdb');
+  matDB=[...MAT_DB_RAW];
+  populateMatCatFilter();renderMaterials(matDB);
+  toast('Data reset to defaults','info');closeSettings();
+}
+
+// ═══════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════
+function toggleTheme(){
+  const light=document.body.classList.toggle('light');
+  localStorage.setItem('hvac_theme',light?'light':'dark');
+  document.getElementById('theme-label').textContent=light?'Dark':'Light';
+  document.getElementById('theme-icon').textContent=light?'☽':'☀';
+  const meta=document.getElementById('theme-meta');
+  if(meta) meta.content=light?'#f0f1f8':'#08091a';
+}
+function loadTheme(){
+  if(localStorage.getItem('hvac_theme')==='light'){
+    document.body.classList.add('light');
+    document.getElementById('theme-label').textContent='Dark';
+    document.getElementById('theme-icon').textContent='☽';
+    const meta=document.getElementById('theme-meta');
+    if(meta) meta.content='#f0f1f8';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+function toast(msg,type='info'){
+  const icons={success:'✓',error:'✕',info:'·'};
+  const col={success:'var(--success)',error:'var(--danger)',info:'var(--accent)'};
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<span style="font-weight:800;color:${col[type]}">${icons[type]}</span>${xe(msg)}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0'},2800);
+  setTimeout(()=>el.remove(),3200);
+}
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function f2(n){return(+(n||0)).toLocaleString('en-CA',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function pf(s,d=0){const n=parseFloat(s);return isNaN(n)?d:n}
+function xe(s){const d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML}
+function dl(content,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click()}
+
+// ═══════════════════════════════════════════════
+// MATERIAL EDIT / ADD MODAL
+// ═══════════════════════════════════════════════
+let currentMatId=null; // null = adding new, string = editing existing
+
+function openMatAdd(){
+  currentMatId=null;
+  document.getElementById('mat-modal-title').textContent='Add Material';
+  document.getElementById('mm-cost').value='';
+  document.getElementById('mm-sell').value='';
+  document.getElementById('mm-desc').value='';
+  document.getElementById('mm-cat').value='';
+  document.getElementById('mm-unit').value='';
+  document.getElementById('mm-id').value='';
+  document.getElementById('mm-tier-row').style.display='none';
+  document.getElementById('mm-sell-calc').textContent='—';
+  document.getElementById('mm-delete-btn').style.display='none';
+  populateMatCatDatalist();
+  document.getElementById('mat-edit-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('mm-cost').focus(),60);
+}
+
+function openMatEdit(id){
+  const item=matDB.find(p=>p.id===id);
+  if(!item) return;
+  currentMatId=id;
+  document.getElementById('mat-modal-title').textContent='Edit Material';
+  document.getElementById('mm-cost').value=item.avg_cost;
+  document.getElementById('mm-sell').value=f2(item.sell_price);
+  document.getElementById('mm-desc').value=item.description;
+  document.getElementById('mm-cat').value=item.category||'';
+  document.getElementById('mm-unit').value=item.unit||'';
+  document.getElementById('mm-id').value=item.id||'';
+  document.getElementById('mm-delete-btn').style.display='';
+  populateMatCatDatalist();
+  mmCalcSell();
+  document.getElementById('mat-edit-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('mm-cost').focus(),60);
+}
+
+function closeMatModal(){
+  document.getElementById('mat-edit-modal').classList.remove('open');
+  currentMatId=null;
+}
+function handleMatModalClick(e){
+  if(e.target===document.getElementById('mat-edit-modal')) closeMatModal();
+}
+
+function mmCalcSell(){
+  const cost=parseFloat(document.getElementById('mm-cost').value)||0;
+  const tierRow=document.getElementById('mm-tier-row');
+  if(cost<=0){tierRow.style.display='none';return;}
+  const r=applyMarkup(cost,MAT_TIERS);
+  tierRow.style.display='flex';
+  document.getElementById('mm-sell-calc').textContent=
+    '×'+r.mult+' = $'+f2(r.sell)+' ('+r.margin+'% margin)';
+  // auto-fill sell price field
+  document.getElementById('mm-sell').value=f2(r.sell);
+}
+
+function mmResetSell(){
+  const cost=parseFloat(document.getElementById('mm-cost').value)||0;
+  if(!cost){toast('Enter a cost first','error');return;}
+  const r=applyMarkup(cost,MAT_TIERS);
+  document.getElementById('mm-sell').value=f2(r.sell);
+}
+
+function saveMatItem(){
+  const cost=parseFloat(document.getElementById('mm-cost').value);
+  const sellRaw=document.getElementById('mm-sell').value;
+  const sell=parseFloat(sellRaw);
+  const desc=document.getElementById('mm-desc').value.trim();
+  const cat=document.getElementById('mm-cat').value.trim();
+  const unit=document.getElementById('mm-unit').value.trim();
+  const id=document.getElementById('mm-id').value.trim();
+
+  if(!desc){toast('Description is required','error');document.getElementById('mm-desc').focus();return;}
+  if(!cost||cost<=0){toast('A valid cost is required','error');document.getElementById('mm-cost').focus();return;}
+
+  const autoSell=applyMarkup(cost,MAT_TIERS).sell;
+  const finalSell=(!sellRaw||isNaN(sell))?autoSell:sell;
+
+  if(currentMatId!==null){
+    // update existing
+    const idx=matDB.findIndex(p=>p.id===currentMatId);
+    if(idx>=0){
+      matDB[idx]={
+        id:id||matDB[idx].id,
+        description:desc,
+        category:cat||matDB[idx].category||'Other',
+        unit:unit||matDB[idx].unit||'ea',
+        avg_cost:cost,
+        sell_price:finalSell,
+      };
+    }
+    toast('Material updated','success');
+  } else {
+    // add new
+    const newId=id||('CUSTOM-'+Date.now());
+    matDB.push({id:newId,description:desc,category:cat||'Other',unit:unit||'ea',avg_cost:cost,sell_price:finalSell});
+    toast('Material added','success');
+  }
+
+  localStorage.setItem('hvac_matdb',JSON.stringify(matDB));
+  populateMatCatFilter();
+  filterMaterials();
+  closeMatModal();
+}
+
+function deleteMatItem(){
+  if(!confirm('Delete this material from your database? This cannot be undone.')) return;
+  matDB=matDB.filter(p=>p.id!==currentMatId);
+  localStorage.setItem('hvac_matdb',JSON.stringify(matDB));
+  populateMatCatFilter();
+  filterMaterials();
+  closeMatModal();
+  toast('Material deleted','info');
+}
+
+function populateMatCatDatalist(){
+  const cats=[...new Set(matDB.map(p=>p.category))].sort();
+  const dl=document.getElementById('mm-cat-list');
+  if(dl) dl.innerHTML=cats.map(c=>`<option value="${xe(c)}">`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// APP SETTINGS
+// ═══════════════════════════════════════════════
+let appSettings={
+  labourRate:129,returnFee:79,adminPin:'1234',
+  sbUrl:'',sbKey:'',
+  ollamaUrl:'http://localhost:11434',claudeKey:''
+};
+
+function loadAppSettings(){
+  const saved=localStorage.getItem('hvac_app_settings');
+  if(saved) appSettings={...appSettings,...JSON.parse(saved)};
+  // pricing
+  const lr=document.getElementById('s-labour-rate');
+  const rf=document.getElementById('s-return-fee');
+  if(lr) lr.value=appSettings.labourRate;
+  if(rf) rf.value=appSettings.returnFee;
+  // supabase
+  const su=document.getElementById('s-sb-url');
+  const sk=document.getElementById('s-sb-key');
+  if(su) su.value=appSettings.sbUrl||'';
+  if(sk) sk.value=appSettings.sbKey||'';
+  // admin
+  const pin=document.getElementById('s-admin-pin');
+  if(pin) pin.value=appSettings.adminPin||'1234';
+  // ai
+  const ou=document.getElementById('s-ollama-url');
+  const ck=document.getElementById('s-claude-key');
+  if(ou) ou.value=appSettings.ollamaUrl||'http://localhost:11434';
+  if(ck) ck.value=appSettings.claudeKey||'';
+  // apply to labour card
+  const rateInp=document.getElementById('part-rate');
+  if(rateInp) rateInp.value=appSettings.labourRate;
+  const rvLbl=document.getElementById('rv-fee-label');
+  if(rvLbl) rvLbl.textContent='+$'+f2(appSettings.returnFee);
+  // init supabase with saved creds
+  initSupabase();
+}
+function saveAppSettings(){
+  const lr=parseFloat(document.getElementById('s-labour-rate').value)||129;
+  const rf=parseFloat(document.getElementById('s-return-fee').value)||79;
+  appSettings={
+    labourRate:lr,
+    returnFee:rf,
+    adminPin:(document.getElementById('s-admin-pin')?.value||'1234'),
+    sbUrl:(document.getElementById('s-sb-url')?.value||'').trim(),
+    sbKey:(document.getElementById('s-sb-key')?.value||'').trim(),
+    ollamaUrl:(document.getElementById('s-ollama-url')?.value||'http://localhost:11434').trim(),
+    claudeKey:(document.getElementById('s-claude-key')?.value||'').trim(),
+  };
+  localStorage.setItem('hvac_app_settings',JSON.stringify(appSettings));
+  document.getElementById('part-rate').value=lr;
+  document.getElementById('rv-fee-label').textContent='+$'+f2(rf);
+  calcTotal();
+  initSupabase(); // re-init with new creds
+  toast('Settings saved','success');
+}
+
+// ═══════════════════════════════════════════════
+// SUPABASE
+// ═══════════════════════════════════════════════
+let sbClient=null;
+
+function initSupabase(){
+  const url=appSettings.sbUrl;
+  const key=appSettings.sbKey;
+  if(url&&key&&typeof supabase!=='undefined'){
+    try{
+      sbClient=supabase.createClient(url,key);
+    }catch(e){
+      sbClient=null;
+      console.warn('Supabase init failed:',e);
+    }
+  } else {
+    sbClient=null;
+  }
+}
+
+// ═══════════════════════════════════════════════
+// ADMIN PIN
+// ═══════════════════════════════════════════════
+function openPinModal(){
+  document.getElementById('pin-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('pin-input').focus(),80);
+}
+function closePinModal(){
+  document.getElementById('pin-modal').classList.remove('open');
+  document.getElementById('pin-input').value='';
+}
+function handlePinModalClick(e){
+  if(e.target===document.getElementById('pin-modal')) closePinModal();
+}
+function verifyPin(){
+  const entered=document.getElementById('pin-input').value;
+  const stored=appSettings.adminPin||'1234';
+  if(entered===stored){
+    closePinModal();
+    document.getElementById('admin-tab-btn').style.display='';
+    switchTab('admin');
+    loadAdminView();
+    toast('Admin mode unlocked','success');
+  } else {
+    toast('Wrong PIN','error');
+    document.getElementById('pin-input').value='';
+    document.getElementById('pin-input').focus();
+  }
+}
+function exitAdminMode(){
+  document.getElementById('admin-tab-btn').style.display='none';
+  switchTab('part');
+  toast('Admin mode exited','info');
+}
+
+// ═══════════════════════════════════════════════
+// LOOKUP TAB — Phase 2
+// ═══════════════════════════════════════════════
+const DEFAULT_LABOUR_HOURS={
+  'Compressor':5.0,'Motor / Fan Motor':1.5,'Capacitor':0.5,
+  'Control Board':1.5,'Valve':2.0,'Sensor / Thermostat':0.5,
+  'Heat Exchanger':4.0,'Coil':3.0,'Pump':2.5,
+  'Igniter / Burner':1.0,'Filter Dryer':1.0,'Contactor':0.5,
+  'Relay':0.5,'Transformer':1.0,'Blower':1.5,'Damper':1.0,'Other':1.0,
+};
+let labourDefaults={};      // populated from Supabase
+let currentLookupParts=[];  // parts for current lookup result
+let lookupTimer=null;
+
+// Debounced auto-search (fires 800ms after last keystroke)
+function scheduleLookup(){
+  clearTimeout(lookupTimer);
+  const q=document.getElementById('lookup-input').value.trim();
+  if(q.length<3) return; // wait for at least 3 chars
+  lookupTimer=setTimeout(lookupModel,800);
+}
+
+async function lookupModel(){
+  clearTimeout(lookupTimer);
+  const q=document.getElementById('lookup-input').value.trim().toUpperCase();
+  const result=document.getElementById('lookup-result');
+  const bar=document.getElementById('lookup-total-bar');
+  if(!q){return;}
+
+  // Not configured
+  if(!sbClient){
+    result.innerHTML=renderLookupSetup();
+    bar.style.display='none';
+    return;
+  }
+
+  // Show spinner
+  result.innerHTML=`<div class="lookup-loading"><span class="spinner"></span>Searching…</div>`;
+  bar.style.display='none';
+
+  try{
+    // 1. Fetch unit (exact match)
+    const{data:units,error:uErr}=await sbClient
+      .from('units').select('*').eq('model_number',q).limit(1);
+    if(uErr) throw uErr;
+
+    if(!units||units.length===0){
+      result.innerHTML=renderLookupNotFound(q);
+      currentLookupParts=[];
+      return;
+    }
+
+    // 2. Fetch parts for this unit
+    const{data:parts,error:pErr}=await sbClient
+      .from('parts').select('*').eq('unit_model',q).order('category');
+    if(pErr) throw pErr;
+
+    // 3. Pull labour defaults (cached after first call)
+    await ensureLabourDefaults();
+
+    currentLookupParts=parts||[];
+    result.innerHTML=renderLookupFound(units[0],currentLookupParts);
+    bar.style.display='flex';
+    calcLookupTotal();
+
+  }catch(e){
+    result.innerHTML=`<div class="empty-state">
+      <div class="empty-state-icon">⚠</div>
+      <div class="empty-state-text">Error: ${xe(e.message)}</div>
+    </div>`;
+    bar.style.display='none';
+  }
+}
+
+// ── Render helpers ──────────────────────────────
+
+function renderLookupSetup(){
+  return`<div class="lookup-setup">
+    <div class="lookup-setup-icon">⚙</div>
+    <div class="lookup-setup-text">
+      Supabase not configured.<br>
+      Add your <b>Project URL</b> and <b>Anon Key</b> in
+      <b>Settings ⚙</b> to enable model lookup.
+    </div>
+    <button class="btn btn-primary" onclick="openSettings()">Open Settings ⚙</button>
+  </div>`;
+}
+
+function renderLookupFound(unit,parts){
+  // Unit card
+  const badges=[unit.brand,unit.unit_type,unit.tonnage].filter(Boolean);
+  let html=`<div class="lookup-unit-card">
+    <div class="lookup-unit-model">${xe(unit.model_number)}</div>
+    <div class="lookup-unit-meta">
+      ${badges.map(b=>`<span class="lookup-unit-badge">${xe(b)}</span>`).join('')}
+    </div>
+    ${unit.notes?`<div class="lookup-unit-notes">${xe(unit.notes)}</div>`:''}
+  </div>`;
+
+  // Parts
+  if(!parts.length){
+    html+=`<div class="empty-state">
+      <div class="empty-state-icon">○</div>
+      <div class="empty-state-text">No parts listed for this unit yet.<br>
+        Admin can add parts via the Admin panel.</div>
+    </div>`;
+  } else {
+    html+=`<div class="lookup-parts-head">
+      <span class="lookup-parts-title">${parts.length} Part${parts.length!==1?'s':''}</span>
+    </div>
+    <div class="lookup-parts-grid">`;
+    parts.forEach(p=>{html+=renderLookupPartCard(p);});
+    html+=`</div>`;
+  }
+
+  // Labour rate + return visit controls
+  html+=`<div class="lookup-controls">
+    <div class="lookup-rate-wrap">
+      <span class="lookup-rate-label">Labour $/hr</span>
+      <div class="rate-wrap" style="min-width:110px">
+        <span class="rate-prefix">$</span>
+        <input class="rate-input" id="lookup-rate" type="number"
+               value="${appSettings.labourRate}" min="0"
+               oninput="calcLookupTotal()" aria-label="Labour rate per hour" />
+      </div>
+    </div>
+    <label class="rv-toggle" style="gap:8px">
+      <input type="checkbox" id="lookup-rv" onchange="calcLookupTotal()" />
+      <span class="rv-label" id="lookup-rv-label">+$${f2(appSettings.returnFee)} Return Visit</span>
+    </label>
+  </div>`;
+
+  return html;
+}
+
+function renderLookupPartCard(p){
+  const defHrs=labourDefaults[p.category]??DEFAULT_LABOUR_HOURS[p.category]??1.0;
+  const safeId=p.id.replace(/-/g,'');
+  return`<div class="lookup-part-card">
+    <div class="lookup-part-top">
+      <div style="flex:1;min-width:0">
+        <div class="lookup-part-desc">${xe(p.description)}</div>
+        ${p.part_number
+          ?`<div class="lookup-part-num">Part #&nbsp;${xe(p.part_number)}</div>`
+          :''}
+      </div>
+      <span class="lookup-part-cat">${xe(p.category||'Other')}</span>
+    </div>
+    ${p.superseded_by
+      ?`<div class="lookup-superseded">⚠ Discontinued — use Part #&nbsp;<b>${xe(p.superseded_by)}</b></div>`
+      :''}
+    ${p.supersedes
+      ?`<div class="lookup-supersedes">Replaces: ${xe(p.supersedes)}</div>`
+      :''}
+    <div class="lookup-part-hours">
+      <span class="lookup-hours-label">Labour Hours</span>
+      <div class="stepper" style="height:42px">
+        <button class="step-btn" onclick="adjustPartHours('${safeId}',-0.5)"
+                style="width:40px;height:42px" aria-label="Decrease hours">−</button>
+        <input class="step-val" id="lph-${safeId}" type="number"
+               value="${defHrs}" min="0" step="0.5"
+               oninput="calcLookupTotal()"
+               style="width:52px;height:42px;font-size:13px"
+               aria-label="Labour hours for this part" />
+        <button class="step-btn" onclick="adjustPartHours('${safeId}',0.5)"
+                style="width:40px;height:42px" aria-label="Increase hours">+</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderLookupNotFound(model){
+  return`<div class="lookup-not-found">
+    <div class="lookup-nf-icon">◎</div>
+    <div class="lookup-nf-model">${xe(model)}</div>
+    <div class="lookup-nf-text">This model isn't in the database yet.</div>
+    <button class="lookup-report-btn" onclick="reportModel('${model.replace(/'/g,"\\'")}')">
+      ⚑&nbsp;&nbsp;Report Missing Model
+    </button>
+    <div id="lookup-report-status" style="margin-top:14px;font-size:11px;color:var(--muted)"></div>
+  </div>`;
+}
+
+// ── Actions ─────────────────────────────────────
+
+function adjustPartHours(safeId,delta){
+  const inp=document.getElementById('lph-'+safeId);
+  if(!inp) return;
+  const cur=parseFloat(inp.value)||0;
+  inp.value=Math.max(0,Math.round((cur+delta)*2)/2);
+  calcLookupTotal();
+}
+
+function calcLookupTotal(){
+  const rate=parseFloat(document.getElementById('lookup-rate')?.value)||appSettings.labourRate;
+  const rv=document.getElementById('lookup-rv')?.checked;
+  const rvFee=rv?appSettings.returnFee:0;
+
+  // Keep rv label in sync if return fee changed in settings
+  const rvLbl=document.getElementById('lookup-rv-label');
+  if(rvLbl) rvLbl.textContent='+$'+f2(appSettings.returnFee)+' Return Visit';
+
+  let partsTotal=0,labourTotal=0;
+  currentLookupParts.forEach(p=>{
+    partsTotal+=parseFloat(p.sell_price)||0;
+    const safeId=p.id.replace(/-/g,'');
+    const hrs=parseFloat(document.getElementById('lph-'+safeId)?.value)||0;
+    labourTotal+=hrs*rate;
+  });
+
+  const total=partsTotal+labourTotal+rvFee;
+  const el=document.getElementById('lookup-total');
+  if(el) el.textContent='$'+f2(total);
+}
+
+function copyTotal(){
+  const t=document.getElementById('lookup-total')?.textContent||'';
+  navigator.clipboard.writeText(t)
+    .then(()=>toast('Total copied','success'))
+    .catch(()=>{
+      // Fallback for older browsers
+      const ta=document.createElement('textarea');
+      ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();
+      document.execCommand('copy');document.body.removeChild(ta);
+      toast('Total copied','success');
+    });
+}
+
+async function reportModel(model){
+  if(!sbClient){toast('Supabase not configured','error');return;}
+  const btn=document.querySelector('.lookup-report-btn');
+  if(btn){btn.disabled=true;btn.textContent='Sending…';}
+  try{
+    const{error}=await sbClient.from('reports').insert({
+      model_number:model,status:'pending'
+    });
+    if(error) throw error;
+    const status=document.getElementById('lookup-report-status');
+    if(status) status.innerHTML='<span style="color:var(--success)">✓ Report sent — admin will add this model soon.</span>';
+    if(btn){btn.style.display='none';}
+    toast('Report sent','success');
+  }catch(e){
+    toast('Report failed: '+e.message,'error');
+    if(btn){btn.disabled=false;btn.textContent='⚑  Report Missing Model';}
+  }
+}
+
+async function ensureLabourDefaults(){
+  if(Object.keys(labourDefaults).length>0) return;
+  if(!sbClient) return;
+  try{
+    const{data}=await sbClient.from('labour_defaults').select('*');
+    (data||[]).forEach(r=>{labourDefaults[r.category]=parseFloat(r.default_hours);});
+  }catch(e){
+    console.warn('Labour defaults load failed, using built-ins');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// ADMIN PANEL — Phase 3
+// ═══════════════════════════════════════════════
+let adminCurrentUnit=null;
+let allAdminUnits=[];   // cached for client-side filter
+let currentEditUnitModel=null;
+let currentEditPartId=null;
+let currentEditPartUnit=null;
+let aiResearchReportId=null;
+
+// ── Sub-tab switching ──
+function switchAdminSubTab(id){
+  document.querySelectorAll('.admin-sub-tab').forEach(t=>{
+    t.classList.toggle('active',t.dataset.subtab===id);
+  });
+  document.querySelectorAll('.admin-sub-view').forEach(v=>v.classList.remove('active'));
+  const view=document.getElementById(id);
+  if(view) view.classList.add('active');
+  if(id==='admin-units') loadAdminUnits();
+  else if(id==='admin-parts') loadAdminPartsUnitSelector();
+  else if(id==='admin-labour') loadLabourDefaults();
+  else if(id==='admin-reports') loadReports();
+}
+
+function loadAdminView(){
+  switchAdminSubTab('admin-units');
+  loadReportsBadge();
+}
+
+// ── UNITS CRUD ──────────────────────────────────
+async function loadAdminUnits(){
+  const tbody=document.getElementById('admin-units-tbody');
+  if(!tbody) return;
+  if(!sbClient){
+    tbody.innerHTML=`<tr><td colspan="6"><div class="admin-empty"><div class="admin-empty-text">Supabase not configured. Open Settings ⚙.</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=`<tr><td colspan="6"><div class="ai-loading"><span class="ai-spinner"></span>Loading…</div></td></tr>`;
+  try{
+    const{data,error}=await sbClient.from('units').select('*').order('brand').order('model_number');
+    if(error) throw error;
+    allAdminUnits=data||[];
+    renderAdminUnitsTable(allAdminUnits);
+  }catch(e){
+    tbody.innerHTML=`<tr><td colspan="6" style="color:var(--danger);padding:14px">${xe(e.message)}</td></tr>`;
+  }
+}
+
+function filterAdminUnits(){
+  const q=document.getElementById('units-search').value.toLowerCase();
+  const filtered=q?allAdminUnits.filter(u=>
+    (u.model_number+u.brand+u.unit_type+u.tonnage).toLowerCase().includes(q)
+  ):allAdminUnits;
+  renderAdminUnitsTable(filtered);
+}
+
+function renderAdminUnitsTable(units){
+  const tbody=document.getElementById('admin-units-tbody');
+  if(!units.length){
+    tbody.innerHTML=`<tr><td colspan="6"><div class="admin-empty">
+      <div class="admin-empty-text">No units found. Click "+ Add Unit" to get started.</div>
+    </div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=units.map(u=>`
+    <tr class="admin-row">
+      <td><span class="acell acell-mono">${xe(u.model_number)}</span></td>
+      <td><span class="acell">${xe(u.brand||'—')}</span></td>
+      <td><span class="acell acell-muted">${xe(u.unit_type||'—')}</span></td>
+      <td><span class="acell acell-muted">${xe(u.tonnage||'—')}</span></td>
+      <td><span class="acell acell-muted" style="font-size:10px">${xe(u.notes||'')}</span></td>
+      <td>
+        <div class="admin-row-actions">
+          <button class="admin-row-btn" onclick="openUnitModal('${xe(u.model_number)}')" aria-label="Edit unit">Edit</button>
+          <button class="admin-row-btn" onclick="viewUnitParts('${xe(u.model_number)}')" aria-label="View parts">Parts</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function openUnitModal(modelNum, prefillModel, reportId){
+  currentEditUnitModel=modelNum||null;
+  const modal=document.getElementById('unit-modal');
+  const isEdit=modelNum!=null;
+  document.getElementById('unit-modal-title').textContent=isEdit?'Edit Unit':'Add Unit';
+  document.getElementById('um-model').value=prefillModel||modelNum||'';
+  document.getElementById('um-model').readOnly=isEdit;
+  document.getElementById('um-model').style.opacity=isEdit?'0.6':'1';
+  document.getElementById('um-brand').value='';
+  document.getElementById('um-type').value='';
+  document.getElementById('um-tonnage').value='';
+  document.getElementById('um-notes').value='';
+  document.getElementById('um-delete-btn').style.display='none';
+
+  if(isEdit&&sbClient){
+    sbClient.from('units').select('*').eq('model_number',modelNum).single()
+      .then(({data:u})=>{
+        if(!u) return;
+        document.getElementById('um-brand').value=u.brand||'';
+        document.getElementById('um-type').value=u.unit_type||'';
+        document.getElementById('um-tonnage').value=u.tonnage||'';
+        document.getElementById('um-notes').value=u.notes||'';
+        document.getElementById('um-delete-btn').style.display='';
+      });
+  }
+  modal.classList.add('open');
+  setTimeout(()=>document.getElementById('um-model').focus(),80);
+}
+
+async function saveUnit(){
+  const model=document.getElementById('um-model').value.trim().toUpperCase();
+  if(!model){toast('Model number required','error');return;}
+  if(!sbClient){toast('Supabase not configured','error');return;}
+  const payload={
+    model_number:model,
+    brand:document.getElementById('um-brand').value.trim(),
+    unit_type:document.getElementById('um-type').value,
+    tonnage:document.getElementById('um-tonnage').value.trim(),
+    notes:document.getElementById('um-notes').value.trim(),
+  };
+  try{
+    const{error}=await sbClient.from('units').upsert(payload,{onConflict:'model_number'});
+    if(error) throw error;
+    toast(`Unit ${model} saved`,'success');
+    closeUnitModal();
+    loadAdminUnits();
+  }catch(e){toast('Save failed: '+e.message,'error');}
+}
+
+async function deleteUnit(){
+  if(!currentEditUnitModel) return;
+  if(!confirm(`Delete unit ${currentEditUnitModel} and ALL its parts? This cannot be undone.`)) return;
+  try{
+    const{error}=await sbClient.from('units').delete().eq('model_number',currentEditUnitModel);
+    if(error) throw error;
+    toast('Unit deleted','info');
+    closeUnitModal();
+    loadAdminUnits();
+  }catch(e){toast('Delete failed: '+e.message,'error');}
+}
+
+function closeUnitModal(){
+  document.getElementById('unit-modal').classList.remove('open');
+  currentEditUnitModel=null;
+}
+function handleUnitModalClick(e){
+  if(e.target===document.getElementById('unit-modal')) closeUnitModal();
+}
+
+// ── PARTS CRUD ──────────────────────────────────
+function viewUnitParts(modelNum){
+  switchAdminSubTab('admin-parts');
+  adminCurrentUnit=modelNum;
+  setTimeout(()=>{
+    const sel=document.getElementById('admin-parts-unit-select');
+    if(sel) sel.value=modelNum;
+    loadAdminParts(modelNum);
+  },120);
+}
+
+async function loadAdminPartsUnitSelector(){
+  const sel=document.getElementById('admin-parts-unit-select');
+  if(!sbClient||!sel) return;
+  try{
+    const{data}=await sbClient.from('units').select('model_number,brand').order('brand').order('model_number');
+    const prev=adminCurrentUnit;
+    sel.innerHTML='<option value="">Select a unit…</option>';
+    (data||[]).forEach(u=>{
+      const o=document.createElement('option');
+      o.value=u.model_number;
+      o.textContent=u.model_number+(u.brand?` · ${u.brand}`:'');
+      sel.appendChild(o);
+    });
+    if(prev){sel.value=prev;loadAdminParts(prev);}
+  }catch(e){}
+}
+
+async function loadAdminParts(modelNum){
+  if(!modelNum){
+    document.getElementById('admin-parts-hint').textContent='Select a unit above to view its parts.';
+    document.getElementById('admin-parts-table-wrap').style.display='none';
+    return;
+  }
+  adminCurrentUnit=modelNum;
+  const hint=document.getElementById('admin-parts-hint');
+  const tableWrap=document.getElementById('admin-parts-table-wrap');
+  const tbody=document.getElementById('admin-parts-tbody');
+  hint.textContent=`Showing parts for: ${modelNum}`;
+  tableWrap.style.display='';
+
+  if(!sbClient) return;
+  tbody.innerHTML=`<tr><td colspan="8"><div class="ai-loading"><span class="ai-spinner"></span>Loading…</div></td></tr>`;
+  try{
+    const{data,error}=await sbClient.from('parts').select('*').eq('unit_model',modelNum).order('category').order('description');
+    if(error) throw error;
+    if(!data.length){
+      tbody.innerHTML=`<tr><td colspan="8"><div class="admin-empty"><div class="admin-empty-text">No parts yet. Click "+ Add Part" or use "Research AI".</div></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML=data.map(p=>`
+      <tr class="admin-row" onclick="openPartModal('${p.id}','${xe(modelNum)}')">
+        <td><span class="acell acell-muted" style="font-family:var(--mono);font-size:11px">${xe(p.part_number||'—')}</span></td>
+        <td><span class="acell" style="font-weight:600;min-width:180px;white-space:normal">${xe(p.description)}</span></td>
+        <td><span class="acell acell-muted">${xe(p.category||'—')}</span></td>
+        <td><span class="acell acell-right" style="font-family:var(--mono)">$${f2(p.cost||0)}</span></td>
+        <td><span class="acell acell-right acell-success">$${f2(p.sell_price||0)}</span></td>
+        <td><span class="acell acell-warn">${xe(p.superseded_by||'')}</span></td>
+        <td><span class="acell acell-muted" style="font-size:10px">${xe(p.supersedes||'')}</span></td>
+        <td onclick="event.stopPropagation()">
+          <div class="admin-row-actions">
+            <button class="admin-row-btn danger" onclick="deletePartById('${p.id}','${xe(modelNum)}')" aria-label="Delete part">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }catch(e){
+    tbody.innerHTML=`<tr><td colspan="8" style="color:var(--danger);padding:14px">${xe(e.message)}</td></tr>`;
+  }
+}
+
+function openPartModal(partId,unitModel){
+  currentEditPartId=partId||null;
+  currentEditPartUnit=unitModel||adminCurrentUnit;
+  const modal=document.getElementById('part-modal');
+  const isEdit=partId!=null;
+  document.getElementById('part-modal-title').textContent=isEdit?'Edit Part':'Add Part';
+  document.getElementById('pm-unit-label').textContent=currentEditPartUnit||'';
+  // Reset
+  ['pm-cost','pm-sell','pm-desc','pm-partnum','pm-superby','pm-supersedes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pm-cat').value='';
+  document.getElementById('pm-tier-row').style.display='none';
+  document.getElementById('pm-delete-btn').style.display='none';
+
+  if(isEdit&&sbClient){
+    sbClient.from('parts').select('*').eq('id',partId).single().then(({data:p})=>{
+      if(!p) return;
+      document.getElementById('pm-cost').value=p.cost||'';
+      document.getElementById('pm-sell').value=f2(p.sell_price||0);
+      document.getElementById('pm-desc').value=p.description||'';
+      document.getElementById('pm-cat').value=p.category||'';
+      document.getElementById('pm-partnum').value=p.part_number||'';
+      document.getElementById('pm-superby').value=p.superseded_by||'';
+      document.getElementById('pm-supersedes').value=p.supersedes||'';
+      document.getElementById('pm-delete-btn').style.display='';
+      pmCalcSell();
+    });
+  }
+  modal.classList.add('open');
+  setTimeout(()=>document.getElementById('pm-desc').focus(),80);
+}
+
+function pmCalcSell(){
+  const cost=parseFloat(document.getElementById('pm-cost').value)||0;
+  const tierRow=document.getElementById('pm-tier-row');
+  if(cost<=0){tierRow.style.display='none';return;}
+  const r=applyMarkup(cost,PART_TIERS);
+  tierRow.style.display='flex';
+  document.getElementById('pm-auto-sell').textContent='×'+r.mult+' = $'+f2(r.sell)+' ('+r.margin+'% margin)';
+  document.getElementById('pm-sell').value=f2(r.sell);
+}
+
+function pmResetSell(){
+  const cost=parseFloat(document.getElementById('pm-cost').value)||0;
+  if(!cost){toast('Enter cost first','error');return;}
+  document.getElementById('pm-sell').value=f2(applyMarkup(cost,PART_TIERS).sell);
+}
+
+async function savePart(){
+  const desc=document.getElementById('pm-desc').value.trim();
+  if(!desc){toast('Description required','error');document.getElementById('pm-desc').focus();return;}
+  if(!currentEditPartUnit){toast('No unit selected','error');return;}
+  if(!sbClient){toast('Supabase not configured','error');return;}
+  const cost=parseFloat(document.getElementById('pm-cost').value)||0;
+  const sellRaw=document.getElementById('pm-sell').value;
+  const sell=parseFloat(sellRaw)||(cost>0?applyMarkup(cost,PART_TIERS).sell:0);
+  const payload={
+    unit_model:currentEditPartUnit,
+    part_number:document.getElementById('pm-partnum').value.trim()||null,
+    description:desc,
+    category:document.getElementById('pm-cat').value||'Other',
+    cost,sell_price:sell,
+    superseded_by:document.getElementById('pm-superby').value.trim()||null,
+    supersedes:document.getElementById('pm-supersedes').value.trim()||null,
+  };
+  try{
+    let error;
+    if(currentEditPartId){
+      ({error}=await sbClient.from('parts').update(payload).eq('id',currentEditPartId));
+    } else {
+      ({error}=await sbClient.from('parts').insert(payload));
+    }
+    if(error) throw error;
+    toast('Part saved','success');
+    closePartModal();
+    loadAdminParts(currentEditPartUnit);
+    labourDefaults={};// invalidate cache so lookup refreshes
+  }catch(e){toast('Save failed: '+e.message,'error');}
+}
+
+async function deleteCurrentPart(){
+  if(!currentEditPartId) return;
+  if(!confirm('Delete this part? Cannot be undone.')) return;
+  try{
+    const{error}=await sbClient.from('parts').delete().eq('id',currentEditPartId);
+    if(error) throw error;
+    toast('Part deleted','info');
+    closePartModal();
+    loadAdminParts(currentEditPartUnit);
+  }catch(e){toast('Delete failed: '+e.message,'error');}
+}
+
+async function deletePartById(id,modelNum){
+  if(!confirm('Delete this part? Cannot be undone.')) return;
+  if(!sbClient) return;
+  try{
+    const{error}=await sbClient.from('parts').delete().eq('id',id);
+    if(error) throw error;
+    toast('Part deleted','info');
+    loadAdminParts(modelNum);
+  }catch(e){toast('Delete failed: '+e.message,'error');}
+}
+
+function closePartModal(){
+  document.getElementById('part-modal').classList.remove('open');
+  currentEditPartId=null;currentEditPartUnit=null;
+}
+function handlePartModalClick(e){
+  if(e.target===document.getElementById('part-modal')) closePartModal();
+}
+
+// ── LABOUR DEFAULTS ─────────────────────────────
+const ALL_CATS=['Compressor','Motor / Fan Motor','Capacitor','Control Board','Valve',
+  'Sensor / Thermostat','Heat Exchanger','Coil','Pump','Igniter / Burner',
+  'Filter Dryer','Contactor','Relay','Transformer','Blower','Damper','Other'];
+
+async function loadLabourDefaults(){
+  const wrap=document.getElementById('labour-defaults-wrap');
+  if(!wrap) return;
+  let saved={};
+  if(sbClient){
+    try{
+      const{data}=await sbClient.from('labour_defaults').select('*');
+      (data||[]).forEach(r=>{saved[r.category]=parseFloat(r.default_hours);});
+    }catch(e){}
+  }
+  wrap.innerHTML=`<table class="labour-defaults-tbl">
+    <thead><tr><th>Category</th><th style="text-align:right">Default Hours</th><th style="width:80px;text-align:right">Action</th></tr></thead>
+    <tbody>
+      ${ALL_CATS.map(cat=>{
+        const hrs=saved[cat]??DEFAULT_LABOUR_HOURS[cat]??1.0;
+        const key=cat.replace(/[\s\/]+/g,'-');
+        return`<tr>
+          <td style="font-weight:600">${xe(cat)}</td>
+          <td style="text-align:right">
+            <input class="ld-input" id="ld-${key}" type="number" min="0" step="0.5" value="${hrs}" aria-label="${xe(cat)} hours" />
+          </td>
+          <td style="text-align:right">
+            <button class="btn btn-ghost btn-sm" onclick="saveLabourDefault('${xe(cat)}')">Save</button>
+          </td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
+
+function ldKey(cat){return cat.replace(/[\s\/]+/g,'-');}
+
+async function saveLabourDefault(cat){
+  if(!sbClient){toast('Supabase not configured','error');return;}
+  const hrs=parseFloat(document.getElementById('ld-'+ldKey(cat))?.value)||1.0;
+  try{
+    const{error}=await sbClient.from('labour_defaults').upsert({category:cat,default_hours:hrs},{onConflict:'category'});
+    if(error) throw error;
+    labourDefaults[cat]=hrs;
+    toast(`${cat} → ${hrs}h saved`,'success');
+  }catch(e){toast('Save failed: '+e.message,'error');}
+}
+
+async function saveAllLabourDefaults(){
+  if(!sbClient){toast('Supabase not configured','error');return;}
+  const rows=ALL_CATS.map(cat=>{
+    const hrs=parseFloat(document.getElementById('ld-'+ldKey(cat))?.value)||1.0;
+    labourDefaults[cat]=hrs;
+    return{category:cat,default_hours:hrs};
+  });
+  try{
+    const{error}=await sbClient.from('labour_defaults').upsert(rows,{onConflict:'category'});
+    if(error) throw error;
+    toast('All labour defaults saved','success');
+  }catch(e){toast('Save failed: '+e.message,'error');}
+}
+
+// ── REPORTS ─────────────────────────────────────
+async function loadReports(){
+  const list=document.getElementById('reports-list');
+  if(!list||!sbClient) return;
+  list.innerHTML='<div class="ai-loading"><span class="ai-spinner"></span>Loading…</div>';
+  try{
+    const{data,error}=await sbClient.from('reports').select('*').order('reported_at',{ascending:false});
+    if(error) throw error;
+    if(!data.length){
+      list.innerHTML='<div class="admin-empty"><div class="admin-empty-text">No reports yet. Techs will appear here when they flag a missing model.</div></div>';
+      return;
+    }
+    list.innerHTML=data.map(r=>`
+      <div class="report-card">
+        <div class="report-info">
+          <div class="report-model">${xe(r.model_number)}</div>
+          <div class="report-time">${new Date(r.reported_at).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+          ${r.notes?`<div style="font-size:10px;color:var(--muted);margin-top:4px">${xe(r.notes)}</div>`:''}
+        </div>
+        <span class="report-status-badge ${r.status}">${r.status}</span>
+        <div class="report-actions">
+          ${r.status==='pending'?`
+            <button class="btn btn-primary btn-sm" onclick="startAddFromReport('${xe(r.model_number)}','${r.id}')">Add Unit</button>
+            <button class="btn btn-secondary btn-sm" onclick="openAIResearchModal('${xe(r.model_number)}','${r.id}')">Research AI</button>
+          `:''}
+          <button class="btn btn-ghost btn-sm" onclick="markReportReviewed('${r.id}')">✓ Done</button>
+        </div>
+      </div>`).join('');
+  }catch(e){
+    list.innerHTML=`<div style="color:var(--danger);padding:12px;font-size:12px">${xe(e.message)}</div>`;
+  }
+}
+
+async function loadReportsBadge(){
+  if(!sbClient) return;
+  try{
+    const{count}=await sbClient.from('reports').select('id',{count:'exact',head:true}).eq('status','pending');
+    const badge=document.getElementById('reports-badge');
+    if(badge){
+      badge.style.display=count>0?'inline-flex':'none';
+      badge.textContent=count;
+    }
+  }catch(e){}
+}
+
+async function markReportReviewed(id){
+  if(!sbClient) return;
+  try{
+    const{error}=await sbClient.from('reports').update({status:'reviewed'}).eq('id',id);
+    if(error) throw error;
+    toast('Report marked reviewed','success');
+    loadReports();
+    loadReportsBadge();
+  }catch(e){toast('Update failed: '+e.message,'error');}
+}
+
+function startAddFromReport(modelNum,reportId){
+  aiResearchReportId=reportId;
+  switchAdminSubTab('admin-units');
+  setTimeout(()=>openUnitModal(null,modelNum,reportId),200);
+}
+
+// ── AI RESEARCH ──────────────────────────────────
+function openAIResearchModal(modelNum,reportId){
+  aiResearchReportId=reportId||null;
+  document.getElementById('ai-model-input').value=modelNum||'';
+  document.getElementById('ai-paste-content').value='';
+  document.getElementById('ai-results-wrap').innerHTML='';
+  switchAISubTab('ai-ask');
+  document.getElementById('ai-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('ai-model-input').focus(),80);
+}
+function closeAIModal(){document.getElementById('ai-modal').classList.remove('open');}
+function handleAIModalClick(e){if(e.target===document.getElementById('ai-modal'))closeAIModal();}
+
+function switchAISubTab(id){
+  document.querySelectorAll('.ai-sub-tab').forEach((t,i)=>{
+    t.classList.toggle('active',['ai-ask','ai-paste'][i]===id);
+  });
+  document.getElementById('ai-ask-view').style.display=id==='ai-ask'?'block':'none';
+  document.getElementById('ai-paste-view').style.display=id==='ai-paste'?'block':'none';
+}
+
+async function runAIResearch(mode){
+  const model=document.getElementById('ai-model-input').value.trim().toUpperCase();
+  if(!model){toast('Enter model number first','error');document.getElementById('ai-model-input').focus();return;}
+  const pasteContent=mode==='paste'?document.getElementById('ai-paste-content').value.trim():'';
+  if(mode==='paste'&&!pasteContent){toast('Paste parts page content first','error');return;}
+
+  const wrap=document.getElementById('ai-results-wrap');
+  wrap.innerHTML='<div class="ai-loading"><span class="ai-spinner"></span>Asking AI — this may take 20–30 seconds…</div>';
+
+  const prompt=pasteContent
+    ?`Extract HVAC replacement parts from the following content for model ${model}. Return ONLY a valid JSON array with no other text or explanation: [{"part_number":"string or empty","description":"string","category":"string"}]. Use only these categories: Compressor, Motor / Fan Motor, Capacitor, Control Board, Valve, Sensor / Thermostat, Heat Exchanger, Coil, Pump, Igniter / Burner, Filter Dryer, Contactor, Relay, Transformer, Blower, Damper, Other.\n\nContent:\n${pasteContent.substring(0,4000)}`
+    :`List the most common OEM replacement parts for HVAC unit model number: ${model}. Return ONLY a valid JSON array with no other text, markdown, or explanation: [{"part_number":"string or empty string if unknown","description":"string","category":"string"}]. Use only these categories: Compressor, Motor / Fan Motor, Capacitor, Control Board, Valve, Sensor / Thermostat, Heat Exchanger, Coil, Pump, Igniter / Burner, Filter Dryer, Contactor, Relay, Transformer, Blower, Damper, Other. List at least 5 parts if known.`;
+
+  try{
+    let text;
+    const ollamaUrl=(appSettings.ollamaUrl||'http://localhost:11434').trim();
+    try{
+      text=await callOllama(prompt,ollamaUrl);
+    }catch(ollamaErr){
+      const claudeKey=(appSettings.claudeKey||'').trim();
+      if(claudeKey){
+        wrap.innerHTML='<div class="ai-loading"><span class="ai-spinner"></span>Ollama unavailable — trying Claude API…</div>';
+        text=await callClaudeAPI(prompt,claudeKey);
+      }else{
+        throw new Error(`Ollama unavailable: ${ollamaErr.message}. No Claude API key configured as fallback.`);
+      }
+    }
+    // Extract JSON array from response
+    const jsonMatch=text.match(/\[[\s\S]*?\]/);
+    if(!jsonMatch) throw new Error('AI did not return a JSON array. Try "Paste Parts Page" mode instead.');
+    const parts=JSON.parse(jsonMatch[0]);
+    if(!Array.isArray(parts)||!parts.length) throw new Error('AI returned empty parts list.');
+    renderAIResults(parts,model);
+  }catch(e){
+    wrap.innerHTML=`<div class="ai-error">
+      <strong>Error:</strong> ${xe(e.message)}
+      <div class="ai-hint">
+        Make sure Ollama is running:<br>
+        <code>ollama serve</code><br>
+        <code>ollama pull phi3:mini</code><br><br>
+        Or add a Claude API key in Settings ⚙ as fallback.
+      </div>
+    </div>`;
+  }
+}
+
+window._aiParts=[];
+window._aiModel='';
+
+function renderAIResults(parts,model){
+  window._aiParts=[...parts];
+  window._aiModel=model;
+  const wrap=document.getElementById('ai-results-wrap');
+  wrap.innerHTML=`
+    <div style="margin-top:14px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">
+        Found ${parts.length} parts. Edit then save to DB — costs default to $0 (set in Parts tab).
+      </div>
+      <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--rs);max-height:260px;overflow-y:auto">
+        <table class="ai-results-tbl">
+          <thead><tr><th style="min-width:90px">Part #</th><th style="min-width:180px">Description</th><th style="min-width:130px">Category</th></tr></thead>
+          <tbody>
+            ${parts.map((p,i)=>`
+              <tr>
+                <td><input class="ai-cell-input" value="${xe(p.part_number||'')}" oninput="window._aiParts[${i}].part_number=this.value" aria-label="Part number row ${i+1}" /></td>
+                <td><input class="ai-cell-input" value="${xe(p.description||'')}" oninput="window._aiParts[${i}].description=this.value" aria-label="Description row ${i+1}" /></td>
+                <td>
+                  <select class="ai-cell-select" onchange="window._aiParts[${i}].category=this.value" aria-label="Category row ${i+1}">
+                    ${ALL_CATS.map(c=>`<option${c===p.category?' selected':''}>${xe(c)}</option>`).join('')}
+                  </select>
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+        <button class="btn btn-ghost" onclick="closeAIModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveAIParts()">
+          <svg class="icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save ${parts.length} Parts to DB
+        </button>
+      </div>
+    </div>`;
+}
+
+async function saveAIParts(){
+  const parts=window._aiParts;
+  const model=window._aiModel;
+  if(!parts||!model||!sbClient) return;
+  try{
+    // Ensure unit exists
+    await sbClient.from('units').upsert({model_number:model},{onConflict:'model_number',ignoreDuplicates:true});
+    const rows=parts.filter(p=>p.description).map(p=>({
+      unit_model:model,
+      part_number:p.part_number||null,
+      description:p.description,
+      category:p.category||'Other',
+      cost:0,sell_price:0,
+    }));
+    const{error}=await sbClient.from('parts').insert(rows);
+    if(error) throw error;
+    // Mark report reviewed
+    if(aiResearchReportId){
+      await sbClient.from('reports').update({status:'reviewed'}).eq('id',aiResearchReportId);
+      loadReportsBadge();
+    }
+    toast(`${rows.length} parts saved — set costs in the Parts tab`,'success');
+    closeAIModal();
+    adminCurrentUnit=model;
+    switchAdminSubTab('admin-parts');
+  }catch(e){toast('Save failed: '+e.message,'error');}
+}
+
+// ── OLLAMA / CLAUDE ──────────────────────────────
+async function callOllama(prompt,url){
+  const resp=await fetch(`${url}/api/generate`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'phi3:mini',prompt,stream:false}),
+    signal:AbortSignal.timeout(45000),
+  });
+  if(!resp.ok) throw new Error(`Ollama HTTP ${resp.status}`);
+  const d=await resp.json();
+  return d.response||'';
+}
+
+async function callClaudeAPI(prompt,key){
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':key,
+      'anthropic-version':'2023-06-01',
+    },
+    body:JSON.stringify({
+      model:'claude-haiku-4-5-20251001',
+      max_tokens:1024,
+      messages:[{role:'user',content:prompt}],
+    }),
+  });
+  if(!resp.ok) throw new Error(`Claude API HTTP ${resp.status}`);
+  const d=await resp.json();
+  return d.content[0].text||'';
+}
+
+// ── BULK XLSX IMPORT (units + parts) ────────────
+function importUnitsXlsx(input){
+  const file=input.files[0];if(!file) return;
+  if(!sbClient){toast('Supabase not configured','error');return;}
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const unitsMap={};const partRows=[];
+      wb.SheetNames.forEach(sn=>{
+        const data=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
+        data.forEach(row=>{
+          const model=(row['Model Number']||row['ModelNumber']||row['Model']||'').toString().trim().toUpperCase();
+          if(!model) return;
+          if(!unitsMap[model]) unitsMap[model]={
+            model_number:model,
+            brand:(row['Brand']||'').toString().trim(),
+            unit_type:(row['Unit Type']||row['Type']||'').toString().trim(),
+            tonnage:(row['Tonnage']||'').toString().trim(),
+            notes:(row['Notes']||'').toString().trim(),
+          };
+          const desc=(row['Description']||'').toString().trim();
+          if(desc){
+            const cost=pf(row['Cost']||row['avg_cost']||0);
+            const sell=pf(row['Sell Price']||row['sell_price']||(cost>0?applyMarkup(cost,PART_TIERS).sell:0));
+            partRows.push({
+              unit_model:model,
+              part_number:(row['Part Number']||row['PartNum']||'').toString().trim()||null,
+              description:desc,
+              category:(row['Category']||'Other').toString().trim(),
+              cost,sell_price:sell,
+              superseded_by:(row['Superseded By']||'').toString().trim()||null,
+              supersedes:(row['Supersedes']||'').toString().trim()||null,
+            });
+          }
+        });
+      });
+      const unitRows=Object.values(unitsMap);
+      if(unitRows.length){
+        const{error}=await sbClient.from('units').upsert(unitRows,{onConflict:'model_number'});
+        if(error) throw error;
+      }
+      if(partRows.length){
+        const{error}=await sbClient.from('parts').insert(partRows);
+        if(error) throw error;
+      }
+      toast(`Imported: ${unitRows.length} units · ${partRows.length} parts`,'success');
+      loadAdminUnits();
+    }catch(err){toast('Import error: '+err.message,'error');}
+    input.value='';
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ═══════════════════════════════════════════════
+// HOURS STEPPER
+// ═══════════════════════════════════════════════
+function adjustHours(delta){
+  const inp=document.getElementById('part-hours');
+  const cur=parseFloat(inp.value)||0;
+  const next=Math.max(0,Math.round((cur+delta)*2)/2);
+  inp.value=next;
+  calcTotal();
+}
+
+// ═══════════════════════════════════════════════
+// TOTAL CALC (Parts tab)
+// ═══════════════════════════════════════════════
+function calcTotal(){
+  // read sell price from the displayed value
+  const sellRaw=document.getElementById('part-sell').textContent.replace(/[$,]/g,'');
+  const sell=parseFloat(sellRaw)||0;
+  const hours=parseFloat(document.getElementById('part-hours').value)||0;
+  const rate=parseFloat(document.getElementById('part-rate').value)||appSettings.labourRate;
+  const rv=document.getElementById('part-rv').checked;
+  const rvFee=rv?appSettings.returnFee:0;
+  const labour=hours*rate;
+  const total=sell+labour+rvFee;
+
+  // rv label stays in sync with settings
+  document.getElementById('rv-fee-label').textContent='+$'+f2(appSettings.returnFee);
+
+  // breakdown display
+  document.getElementById('bk-parts').textContent=sell>0?'$'+f2(sell):'—';
+  const lbl=hours>0?`Labour (${hours}h × $${rate})`:'Labour';
+  document.getElementById('bk-labour-lbl').textContent=lbl;
+  document.getElementById('bk-labour').textContent='$'+f2(labour);
+
+  const rvRow=document.getElementById('bk-rv-row');
+  rvRow.style.display=rv?'flex':'none';
+  document.getElementById('bk-rv').textContent='$'+f2(rvFee);
+
+  document.getElementById('bk-total').textContent=(sell>0||hours>0||rv)?'$'+f2(total):'—';
+}
+
+// ═══════════════════════════════════════════════
+// MANAGE MATERIALS PAGE
+// ═══════════════════════════════════════════════
+function openManageMaterials(){
+  // Deactivate all top-nav tab buttons
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.classList.remove('active');
+    t.setAttribute('aria-selected','false');
+  });
+  // Hide all tab views, show manage view
+  document.querySelectorAll('.tab-view').forEach(v=>v.classList.remove('active'));
+  const view=document.getElementById('view-manage-mat');
+  if(view) view.classList.add('active');
+  renderManageTable();
+}
+
+function closeManageMaterials(){
+  switchTab('material');
+  switchSubTab('mat-db');
+  filterMaterials();
+}
+
+function renderManageTable(){
+  const tbody=document.getElementById('manage-tbody');
+  if(!tbody) return;
+
+  // Group matDB by category
+  const grouped={};
+  matDB.forEach(item=>{
+    const cat=item.category||'Other';
+    if(!grouped[cat]) grouped[cat]=[];
+    grouped[cat].push(item);
+  });
+  const cats=Object.keys(grouped).sort();
+
+  const rows=[];
+  cats.forEach(cat=>{
+    const items=grouped[cat].sort((a,b)=>a.description.localeCompare(b.description));
+    rows.push(`<tr class="cat-group-row"><td colspan="7">${xe(cat)}<span class="cat-count">${items.length}</span></td></tr>`);
+    items.forEach(item=>{
+      rows.push(`<tr class="manage-row" data-id="${encodeURIComponent(item.id)}">
+        <td class="mt-desc"><span class="cell-val" data-field="description">${xe(item.description)}</span></td>
+        <td class="mt-cat"><span class="cell-val" data-field="category">${xe(item.category||'')}</span></td>
+        <td class="mt-id"><span class="cell-val" data-field="id">${xe(item.id||'')}</span></td>
+        <td class="mt-unit"><span class="cell-val" data-field="unit">${xe(item.unit||'')}</span></td>
+        <td class="mt-cost"><span class="cell-val" data-field="avg_cost">${xe(f2(item.avg_cost))}</span></td>
+        <td class="mt-sell"><span class="cell-val" data-field="sell_price">${xe(f2(item.sell_price))}</span></td>
+        <td class="mt-del"><button class="del-row-btn" title="Delete row" aria-label="Delete row">✕</button></td>
+      </tr>`);
+    });
+  });
+  tbody.innerHTML=rows.join('');
+
+  // Event delegation on tbody — handles cell clicks and delete buttons
+  tbody.onclick=function(e){
+    // Delete button
+    const del=e.target.closest('.del-row-btn');
+    if(del){
+      const tr=del.closest('tr[data-id]');
+      if(tr) deleteManageRow(decodeURIComponent(tr.dataset.id));
+      return;
+    }
+    // Cell click — find td + data-field from its inner span
+    const td=e.target.closest('td');
+    if(!td) return;
+    const span=td.querySelector('span.cell-val');
+    if(!span) return;
+    const tr=td.closest('tr[data-id]');
+    if(!tr) return;
+    editCell(td, decodeURIComponent(tr.dataset.id), span.dataset.field);
+  };
+}
+
+function editCell(td, id, field){
+  if(!field || td.querySelector('input.cell-input')) return; // already editing
+  const isNum=field==='avg_cost'||field==='sell_price';
+  const item=matDB.find(p=>p.id===id);
+  if(!item) return;
+
+  const rawVal=isNum ? String(item[field]) : String(item[field]||'');
+
+  const input=document.createElement('input');
+  input.className='cell-input';
+  input.type=isNum?'number':'text';
+  if(isNum){input.min='0';input.step='0.01';}
+  input.value=rawVal;
+
+  td.innerHTML='';
+  td.appendChild(input);
+  input.focus();
+  input.select();
+
+  let done=false;
+
+  function commit(){
+    if(done) return;
+    done=true;
+    const val=input.value.trim();
+
+    if(field==='avg_cost'){
+      const c=parseFloat(val);
+      if(!isNaN(c)&&c>=0){
+        item.avg_cost=c;
+        item.sell_price=applyMarkup(c,MAT_TIERS).sell;
+      }
+    } else if(field==='sell_price'){
+      const s=parseFloat(val);
+      if(!isNaN(s)&&s>=0) item.sell_price=s;
+    } else if(field==='id'){
+      const trimmed=val;
+      if(trimmed&&trimmed!==id&&!matDB.find(p=>p.id===trimmed)){
+        item.id=trimmed;
+        const tr=td.closest('tr[data-id]');
+        if(tr) tr.dataset.id=encodeURIComponent(trimmed);
+      }
+    } else {
+      if(val) item[field]=val;
+    }
+
+    localStorage.setItem('hvac_matdb',JSON.stringify(matDB));
+    populateMatCatFilter();
+
+    // Re-render full table when category changes (alters grouping)
+    if(field==='category'){
+      renderManageTable();
+      return;
+    }
+
+    // Otherwise update cells in-place
+    const display=isNum
+      ? f2(item[field==='avg_cost'?'avg_cost':'sell_price'])
+      : String(item[field]||'');
+    td.innerHTML=`<span class="cell-val" data-field="${field}">${xe(display)}</span>`;
+
+    // When cost edited, also refresh the sell cell in this row
+    if(field==='avg_cost'){
+      const tr=td.closest('tr[data-id]');
+      if(tr){
+        const sellTd=tr.querySelector('.mt-sell');
+        if(sellTd) sellTd.innerHTML=`<span class="cell-val" data-field="sell_price">${xe(f2(item.sell_price))}</span>`;
+      }
+    }
+  }
+
+  function cancel(){
+    if(done) return;
+    done=true;
+    const display=isNum ? f2(item[field]) : String(item[field]||'');
+    td.innerHTML=`<span class="cell-val" data-field="${field}">${xe(display)}</span>`;
+  }
+
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){e.preventDefault();input.blur();}
+    if(e.key==='Escape'){e.preventDefault();input.removeEventListener('blur',commit);cancel();}
+  });
+}
+
+function addManageRow(){
+  const newId='CUSTOM-'+Date.now();
+  const newItem={id:newId,description:'',category:'Other',unit:'ea',avg_cost:0,sell_price:0};
+  matDB.unshift(newItem);
+  localStorage.setItem('hvac_matdb',JSON.stringify(matDB));
+
+  const tbody=document.getElementById('manage-tbody');
+  const tr=document.createElement('tr');
+  tr.className='manage-row new-row';
+  tr.dataset.id=encodeURIComponent(newId);
+  tr.innerHTML=`
+    <td class="mt-desc"><span class="cell-val" data-field="description"></span></td>
+    <td class="mt-cat"><span class="cell-val" data-field="category">Other</span></td>
+    <td class="mt-id"><span class="cell-val" data-field="id">${xe(newId)}</span></td>
+    <td class="mt-unit"><span class="cell-val" data-field="unit">ea</span></td>
+    <td class="mt-cost"><span class="cell-val" data-field="avg_cost">0.00</span></td>
+    <td class="mt-sell"><span class="cell-val" data-field="sell_price">0.00</span></td>
+    <td class="mt-del"><button class="del-row-btn" title="Delete row" aria-label="Delete row">✕</button></td>`;
+  tbody.insertBefore(tr, tbody.firstChild);
+
+  // Auto-focus description cell of the new row
+  const descTd=tr.querySelector('.mt-desc');
+  if(descTd) editCell(descTd, newId, 'description');
+  toast('New row added · type description to begin','info');
+}
+
+function deleteManageRow(id){
+  if(!confirm('Delete this material from the database? This cannot be undone.')) return;
+  matDB=matDB.filter(p=>p.id!==id);
+  localStorage.setItem('hvac_matdb',JSON.stringify(matDB));
+  populateMatCatFilter();
+  renderManageTable();
+  toast('Material deleted','info');
+}
+
+// ═══════════════════════════════════════════════
+// PHASE 4 — PWA POLISH
+// ═══════════════════════════════════════════════
+
+// ─── OFFLINE BANNER ────────────────────────────
+function initOffline(){
+  updateOfflineBanner();
+  window.addEventListener('online',  updateOfflineBanner);
+  window.addEventListener('offline', updateOfflineBanner);
+}
+function updateOfflineBanner(){
+  const b=document.getElementById('offline-banner');
+  if(!b) return;
+  if(navigator.onLine){
+    b.classList.remove('show');
+  } else {
+    b.classList.add('show');
+  }
+}
+
+// ─── PWA INSTALL PROMPT ────────────────────────
+let _deferredInstallPrompt=null;
+const PWA_DISMISS_KEY='pwa_install_dismissed';
+const PWA_VISIT_KEY='pwa_visit_count';
+
+function initPwaInstall(){
+  // count visits
+  const visits=(parseInt(localStorage.getItem(PWA_VISIT_KEY)||'0',10))+1;
+  localStorage.setItem(PWA_VISIT_KEY, visits);
+
+  // capture beforeinstallprompt event
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault();
+    _deferredInstallPrompt=e;
+    // show banner after 2nd visit if not dismissed
+    const dismissed=localStorage.getItem(PWA_DISMISS_KEY);
+    if(visits>=2 && !dismissed){
+      showInstallBanner();
+    }
+  });
+
+  // hide banner when app is installed
+  window.addEventListener('appinstalled',()=>{
+    hideInstallBanner();
+    localStorage.setItem(PWA_DISMISS_KEY,'1');
+    toast('App installed! Find ThermalTech on your Home Screen.','success');
+  });
+
+  // wire install button
+  const btn=document.getElementById('pwa-install-btn');
+  if(btn) btn.addEventListener('click', triggerInstall);
+}
+
+function showInstallBanner(){
+  document.getElementById('pwa-install-banner')?.classList.add('show');
+}
+function hideInstallBanner(){
+  document.getElementById('pwa-install-banner')?.classList.remove('show');
+}
+function dismissInstallBanner(){
+  hideInstallBanner();
+  localStorage.setItem(PWA_DISMISS_KEY,'1');
+}
+async function triggerInstall(){
+  if(!_deferredInstallPrompt){
+    toast('Use browser menu → "Add to Home Screen"','info');
+    return;
+  }
+  _deferredInstallPrompt.prompt();
+  const{outcome}=await _deferredInstallPrompt.userChoice;
+  if(outcome==='accepted'){
+    toast('Installing…','success');
+  }
+  _deferredInstallPrompt=null;
+  hideInstallBanner();
+}
+</script>
+</body>
+</html>
