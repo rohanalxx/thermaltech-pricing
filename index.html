@@ -1725,75 +1725,90 @@ body{
 
       <div class="mdivider"></div>
 
-      <!-- Supabase -->
-      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px">Supabase (Model Lookup DB)</div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">Project URL</div>
-          <div class="setting-desc">https://xxx.supabase.co</div>
-        </div>
-        <input class="setting-input" id="s-sb-url" type="text" placeholder="https://…"
-               style="width:180px;text-align:left;font-size:10px"
-               aria-label="Supabase URL" />
-      </div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">Anon Key</div>
-          <div class="setting-desc">Public API key (eyJ…)</div>
-        </div>
-        <input class="setting-input" id="s-sb-key" type="text" placeholder="eyJ…"
-               style="width:180px;text-align:left;font-size:10px"
-               aria-label="Supabase anon key" />
-      </div>
-      <button class="btn btn-primary btn-full" style="margin-top:4px" onclick="saveSupabaseSettings()">💾 Save Supabase Credentials</button>
-      <div id="sb-status" style="font-size:11px;text-align:center;margin-top:6px;color:var(--muted)"></div>
-
-      <div class="mdivider"></div>
-
-      <!-- Admin -->
+      <!-- Admin Access — always visible (PIN gate only) -->
       <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px">Admin Access</div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">Admin PIN</div>
-          <div class="setting-desc">4-digit PIN to unlock admin panel</div>
-        </div>
-        <input class="setting-input" id="s-admin-pin" type="password" maxlength="8"
-               placeholder="1234" style="letter-spacing:4px;width:90px"
-               onchange="saveAppSettings()" aria-label="Admin PIN" />
-      </div>
-      <button class="btn btn-secondary btn-full" onclick="closeSettings();openPinModal()">🔒 Enter Admin Mode</button>
-
-      <div class="mdivider"></div>
-
-      <!-- AI -->
-      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px">AI Research (Admin)</div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">Ollama URL</div>
-          <div class="setting-desc">Local AI (Phi-3 mini)</div>
-        </div>
-        <input class="setting-input" id="s-ollama-url" type="url" placeholder="http://localhost:11434"
-               style="width:180px;text-align:left;font-size:10px"
-               onchange="saveAppSettings()" aria-label="Ollama URL" />
-      </div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">Claude API Key</div>
-          <div class="setting-desc">Optional fallback when Ollama offline</div>
-        </div>
-        <input class="setting-input" id="s-claude-key" type="password" placeholder="sk-ant-…"
-               style="width:180px;text-align:left;font-size:10px"
-               onchange="saveAppSettings()" aria-label="Claude API key" />
+      <button class="btn btn-secondary btn-full" id="settings-enter-admin-btn" onclick="closeSettings();openPinModal()">
+        🔒 Enter Admin Mode
+      </button>
+      <div id="settings-admin-active-badge" style="display:none;font-size:11px;font-weight:700;color:var(--warn);text-align:center;padding:6px 0">
+        ⚠ Admin mode is active
       </div>
 
-      <div class="mdivider"></div>
+      <!-- ══ ADMIN-ONLY SETTINGS (hidden until PIN unlocked) ══ -->
+      <div id="settings-admin-section" style="display:none">
 
-      <!-- Backup -->
-      <button class="btn btn-secondary btn-full" onclick="exportDB()">↓ Export Backup (JSON)</button>
-      <button class="btn btn-secondary btn-full" onclick="document.getElementById('import-db').click()">↑ Restore Backup (JSON)</button>
-      <input type="file" id="import-db" accept=".json" style="display:none" onchange="importDB(this)" />
-      <div class="mdivider"></div>
-      <button class="btn btn-danger btn-full" onclick="resetAll()">⚠ Reset All Data</button>
+        <div class="mdivider"></div>
+
+        <!-- Supabase -->
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px">Supabase (Model Lookup DB)</div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Project URL</div>
+            <div class="setting-desc">https://xxx.supabase.co</div>
+          </div>
+          <input class="setting-input" id="s-sb-url" type="text" placeholder="https://…"
+                 style="width:180px;text-align:left;font-size:10px"
+                 aria-label="Supabase URL" />
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Anon Key</div>
+            <div class="setting-desc">Public API key (eyJ…)</div>
+          </div>
+          <input class="setting-input" id="s-sb-key" type="text" placeholder="eyJ…"
+                 style="width:180px;text-align:left;font-size:10px"
+                 aria-label="Supabase anon key" />
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:4px" onclick="saveSupabaseSettings()">💾 Save Supabase Credentials</button>
+        <div id="sb-status" style="font-size:11px;text-align:center;margin-top:6px;color:var(--muted)"></div>
+
+        <div class="mdivider"></div>
+
+        <!-- Admin PIN change -->
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px">Admin PIN</div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Change PIN</div>
+            <div class="setting-desc">4–8 digits</div>
+          </div>
+          <input class="setting-input" id="s-admin-pin" type="password" maxlength="8"
+                 placeholder="1234" style="letter-spacing:4px;width:90px"
+                 onchange="saveAppSettings()" aria-label="Admin PIN" />
+        </div>
+
+        <div class="mdivider"></div>
+
+        <!-- AI Research -->
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px">AI Research</div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Ollama URL</div>
+            <div class="setting-desc">Local AI (Phi-3 mini)</div>
+          </div>
+          <input class="setting-input" id="s-ollama-url" type="url" placeholder="http://localhost:11434"
+                 style="width:180px;text-align:left;font-size:10px"
+                 onchange="saveAppSettings()" aria-label="Ollama URL" />
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Claude API Key</div>
+            <div class="setting-desc">Optional fallback when Ollama offline</div>
+          </div>
+          <input class="setting-input" id="s-claude-key" type="password" placeholder="sk-ant-…"
+                 style="width:180px;text-align:left;font-size:10px"
+                 onchange="saveAppSettings()" aria-label="Claude API key" />
+        </div>
+
+        <div class="mdivider"></div>
+
+        <!-- Backup -->
+        <button class="btn btn-secondary btn-full" onclick="exportDB()">↓ Export Backup (JSON)</button>
+        <button class="btn btn-secondary btn-full" onclick="document.getElementById('import-db').click()">↑ Restore Backup (JSON)</button>
+        <input type="file" id="import-db" accept=".json" style="display:none" onchange="importDB(this)" />
+        <div class="mdivider"></div>
+        <button class="btn btn-danger btn-full" onclick="resetAll()">⚠ Reset All Data</button>
+
+      </div><!-- /settings-admin-section -->
     </div>
   </div>
 </div>
@@ -2613,6 +2628,7 @@ function verifyPin(){
     document.getElementById('admin-tab-btn').style.display='';
     switchTab('admin');
     loadAdminView();
+    setSettingsAdminMode(true);
     toast('Admin mode unlocked','success');
   } else {
     toast('Wrong PIN','error');
@@ -2623,7 +2639,16 @@ function verifyPin(){
 function exitAdminMode(){
   document.getElementById('admin-tab-btn').style.display='none';
   switchTab('part');
+  setSettingsAdminMode(false);
   toast('Admin mode exited','info');
+}
+function setSettingsAdminMode(on){
+  const section=document.getElementById('settings-admin-section');
+  const enterBtn=document.getElementById('settings-enter-admin-btn');
+  const badge=document.getElementById('settings-admin-active-badge');
+  if(section) section.style.display=on?'':'none';
+  if(enterBtn) enterBtn.style.display=on?'none':'';
+  if(badge) badge.style.display=on?'':'none';
 }
 
 // ═══════════════════════════════════════════════
